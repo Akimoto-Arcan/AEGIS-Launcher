@@ -136,53 +136,54 @@ private fun openClockApp(context: Context) {
     }
 }
 
-private val clockPackages = setOf(
-    "com.sec.android.app.clockpackage",
-    "com.samsung.android.app.clockpackage",
-    "com.google.android.deskclock",
-    "com.android.deskclock",
-    "com.oneplus.deskclock",
-    "com.coloros.alarmclock",
-    "com.oppo.alarmclock",
-)
-
 private fun getNextAlarmText(context: Context): String? {
     try {
+        // Method 1: AlarmManager.nextAlarmClock (standard API)
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-            ?: return null
-        val alarmInfo = alarmManager.nextAlarmClock ?: return null
+        val alarmInfo = alarmManager?.nextAlarmClock
 
-        // Only show alarms from actual clock apps, not random app timers
-        val showIntent = alarmInfo.showIntent
-        val alarmPackage = showIntent?.creatorPackage
-        if (alarmPackage != null && alarmPackage !in clockPackages) return null
-
-        val triggerTime = alarmInfo.triggerTime
-        val now = System.currentTimeMillis()
-
-        if (triggerTime <= now) return null
-
-        val diffMs = triggerTime - now
-        val diffHours = diffMs / (1000 * 60 * 60)
-        if (diffHours > 24) return null
-
-        val alarmTime = Instant.ofEpochMilli(triggerTime)
-            .atZone(ZoneId.systemDefault())
-            .toLocalTime()
-
-        val formatted = alarmTime.format(DateTimeFormatter.ofPattern("h:mm a"))
-
-        val totalMinutes = diffMs / (1000 * 60)
-        val h = totalMinutes / 60
-        val m = totalMinutes % 60
-        val timeUntil = when {
-            h == 0L -> "${m}m"
-            m == 0L -> "${h}h"
-            else -> "${h}h ${m}m"
+        if (alarmInfo != null) {
+            val triggerTime = alarmInfo.triggerTime
+            val now = System.currentTimeMillis()
+            if (triggerTime > now) {
+                val diffMs = triggerTime - now
+                val totalMinutes = diffMs / (1000 * 60)
+                if (totalMinutes <= 24 * 60) {
+                    return formatAlarmText(triggerTime, now)
+                }
+            }
         }
 
-        return "ALARM $formatted ($timeUntil)"
+        // Method 2: Read from Settings.System (Samsung/some OEMs store it here)
+        val nextAlarmStr = android.provider.Settings.System.getString(
+            context.contentResolver,
+            android.provider.Settings.System.NEXT_ALARM_FORMATTED
+        )
+        if (!nextAlarmStr.isNullOrBlank()) {
+            return "ALARM $nextAlarmStr"
+        }
+
+        return null
     } catch (_: Exception) {
         return null
     }
+}
+
+private fun formatAlarmText(triggerTime: Long, now: Long): String {
+    val alarmTime = Instant.ofEpochMilli(triggerTime)
+        .atZone(ZoneId.systemDefault())
+        .toLocalTime()
+    val formatted = alarmTime.format(DateTimeFormatter.ofPattern("h:mm a"))
+
+    val diffMs = triggerTime - now
+    val totalMinutes = diffMs / (1000 * 60)
+    val h = totalMinutes / 60
+    val m = totalMinutes % 60
+    val timeUntil = when {
+        h == 0L -> "${m}m"
+        m == 0L -> "${h}h"
+        else -> "${h}h ${m}m"
+    }
+
+    return "ALARM $formatted ($timeUntil)"
 }
