@@ -18,7 +18,8 @@ import kotlin.coroutines.resume
 @Singleton
 class TextToSpeechManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val edgeTts: EdgeTtsEngine
+    private val edgeTts: EdgeTtsEngine,
+    private val preferencesStore: com.jarvis.launcher.data.local.PreferencesStore
 ) {
     private var tts: TextToSpeech? = null
 
@@ -58,7 +59,8 @@ class TextToSpeechManager @Inject constructor(
         _isSpeaking.value = true
         try {
             // Try Edge TTS first (AI neural voice)
-            val success = edgeTts.speak(text)
+            val voice = preferencesStore.getVoiceId()
+            val success = edgeTts.speak(text, voice)
             if (success) {
                 Log.d("TTS", "Spoke via Edge TTS (en-GB-RyanNeural)")
                 return

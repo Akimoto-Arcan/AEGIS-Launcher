@@ -32,7 +32,7 @@ class EdgeTtsEngine @Inject constructor(
 
     private var mediaPlayer: MediaPlayer? = null
 
-    suspend fun speak(text: String, voice: String = VOICE_JARVIS): Boolean =
+    suspend fun speak(text: String, voice: String = VOICE_RYAN): Boolean =
         withContext(Dispatchers.IO) {
             try {
                 val audioFile = synthesize(text, voice) ?: return@withContext false
@@ -82,9 +82,12 @@ class EdgeTtsEngine @Inject constructor(
                             "Content-Type:application/ssml+xml\r\n" +
                             "Path:ssml\r\n\r\n" +
                             "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' " +
+                            "xmlns:mstts='http://www.w3.org/2001/mstts' " +
                             "xml:lang='en-GB'>" +
                             "<voice name='$voice'>" +
-                            "<prosody rate='+5%' pitch='-5%'>$escapedText</prosody>" +
+                            "<mstts:express-as style='calm'>" +
+                            "<prosody rate='-2%' pitch='-10%' volume='+10%'>$escapedText</prosody>" +
+                            "</mstts:express-as>" +
                             "</voice></speak>"
                     webSocket.send(ssmlMsg)
                 }
@@ -192,7 +195,16 @@ class EdgeTtsEngine @Inject constructor(
     }
 
     companion object {
-        const val VOICE_JARVIS = "en-GB-RyanNeural"
+        const val VOICE_RYAN = "en-GB-RyanNeural"
+        const val VOICE_THOMAS = "en-GB-ThomasNeural"
+        const val VOICE_GUY = "en-US-GuyNeural"
+
+        val VOICES = listOf(
+            VOICE_RYAN to "Ryan (British, deep)",
+            VOICE_THOMAS to "Thomas (British, mature)",
+            VOICE_GUY to "Guy (American, authoritative)"
+        )
+
         private const val WSS_URL = "wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1"
         private const val TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
     }

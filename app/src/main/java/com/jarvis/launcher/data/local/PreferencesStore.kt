@@ -61,6 +61,16 @@ class PreferencesStore @Inject constructor(
         _colorThemeName.value = name
     }
 
+    private val _voiceId = MutableStateFlow(getVoiceId())
+    val voiceId: StateFlow<String> = _voiceId.asStateFlow()
+
+    fun getVoiceId(): String = prefs.getString(KEY_VOICE, DEFAULT_VOICE) ?: DEFAULT_VOICE
+
+    fun setVoiceId(id: String) {
+        prefs.edit().putString(KEY_VOICE, id).apply()
+        _voiceId.value = id
+    }
+
     private val _useFahrenheit = MutableStateFlow(getUseFahrenheit())
     val useFahrenheit: StateFlow<Boolean> = _useFahrenheit.asStateFlow()
 
@@ -74,7 +84,9 @@ class PreferencesStore @Inject constructor(
     companion object {
         private const val KEY_FAVORITES = "favorite_apps"
         private const val KEY_COLOR_THEME = "color_theme"
+        private const val KEY_VOICE = "voice_id"
         private const val KEY_TEMP_UNIT = "use_fahrenheit"
+        private const val DEFAULT_VOICE = "en-GB-RyanNeural"
         private const val SEPARATOR = ","
         private const val DEFAULT_THEME = "Cyan"
         const val MAX_FAVORITES = 16

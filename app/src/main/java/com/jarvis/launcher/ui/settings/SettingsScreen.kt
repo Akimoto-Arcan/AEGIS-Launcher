@@ -136,6 +136,39 @@ fun SettingsScreen(
             }
         }
 
+        // ===== VOICE =====
+        item {
+            val currentVoice by viewModel.voiceId.collectAsState()
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "JARVIS VOICE",
+                style = MaterialTheme.typography.labelLarge,
+                color = hudColors.accent
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            com.jarvis.launcher.domain.voice.EdgeTtsEngine.VOICES.forEach { (id, label) ->
+                val isSelected = currentVoice == id
+                OutlinedButton(
+                    onClick = { viewModel.setVoice(id) },
+                    border = BorderStroke(
+                        1.dp,
+                        if (isSelected) hudColors.accent else HudBorder
+                    ),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp)
+                ) {
+                    Text(
+                        text = if (isSelected) "$label  ●" else label,
+                        color = if (isSelected) hudColors.accent else HudBorder,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+
         // ===== TEMPERATURE UNIT =====
         item {
             val useFahrenheit by viewModel.useFahrenheit.collectAsState()
