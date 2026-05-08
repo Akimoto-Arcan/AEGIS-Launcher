@@ -6,7 +6,8 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,9 +50,11 @@ import com.jarvis.launcher.ui.theme.JarvisCyan
  *
  * @param modifier Modifier for the root container.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     onJarvisActivate: () -> Unit = {},
+    onSettingsOpen: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
@@ -108,10 +111,13 @@ fun HomeScreen(
             // ---- Spacer pushes bottom content down ----
             Spacer(modifier = Modifier.weight(1f))
 
-            // ---- JARVIS label with glow (tap to activate assistant) ----
+            // ---- JARVIS label: tap = assistant, long press = settings ----
             GlowText(
                 text = "J A R V I S",
-                modifier = Modifier.clickable { onJarvisActivate() },
+                modifier = Modifier.combinedClickable(
+                    onClick = { onJarvisActivate() },
+                    onLongClick = { onSettingsOpen() }
+                ),
                 color = JarvisCyan,
                 glowColor = JarvisCyan,
                 fontSize = 28.sp,

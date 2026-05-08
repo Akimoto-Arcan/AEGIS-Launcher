@@ -25,19 +25,24 @@ import com.jarvis.launcher.ui.assistant.AssistantOverlay
 import com.jarvis.launcher.ui.assistant.AssistantViewModel
 import com.jarvis.launcher.ui.launcher.drawer.AppDrawerScreen
 import com.jarvis.launcher.ui.launcher.home.HomeScreen
+import com.jarvis.launcher.ui.settings.SettingsScreen
+import com.jarvis.launcher.ui.settings.SettingsViewModel
 import com.jarvis.launcher.util.PermissionUtil
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LauncherScreen(
     launcherViewModel: LauncherViewModel = hiltViewModel(),
-    assistantViewModel: AssistantViewModel = hiltViewModel()
+    assistantViewModel: AssistantViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val apps by launcherViewModel.filteredApps.collectAsState()
     val searchQuery by launcherViewModel.searchQuery.collectAsState()
+    val apiKey by settingsViewModel.apiKey.collectAsState()
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
+    var showSettings by remember { mutableStateOf(!settingsViewModel.hasApiKey()) }
     var permissionsGranted by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -71,25 +76,33 @@ fun LauncherScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        VerticalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize(),
-            beyondViewportPageCount = 1
-        ) { page ->
-            when (page) {
-                0 -> HomeScreen(
-                    onJarvisActivate = { assistantViewModel.onManualActivate() }
-                )
-                1 -> AppDrawerScreen(
-                    apps = apps,
-                    searchQuery = searchQuery,
-                    onSearchQueryChanged = launcherViewModel::onSearchQueryChanged,
-                    onAppClick = launcherViewModel::launchApp
-                )
+    if (showSettings) {
+        SettingsScreen(
+            viewModel = settingsViewModel,
+            onDone = { showSettings = false }
+        )
+    } else {
+        Box(modifier = Modifier.fillMaxSize()) {
+            VerticalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 1
+            ) { page ->
+                when (page) {
+                    0 -> HomeScreen(
+                        onJarvisActivate = { assistantViewModel.onManualActivate() },
+                        onSettingsOpen = { showSettings = true }
+                    )
+                    1 -> AppDrawerScreen(
+                        apps = apps,
+                        searchQuery = searchQuery,
+                        onSearchQueryChanged = launcherViewModel::onSearchQueryChanged,
+                        onAppClick = launcherViewModel::launchApp
+                    )
+                }
             }
-        }
 
-        AssistantOverlay(viewModel = assistantViewModel)
+            AssistantOverlay(viewModel = assistantViewModel)
+        }
     }
 }

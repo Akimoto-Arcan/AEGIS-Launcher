@@ -84,4 +84,6 @@ dependencies {
     ksp(libs.moshi.codegen)
 
     implementation(libs.kotlinx.coroutines.android)
+
+    implementation(libs.androidx.security.crypto)
 }

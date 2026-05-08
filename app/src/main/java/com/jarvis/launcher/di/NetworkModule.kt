@@ -1,6 +1,6 @@
 package com.jarvis.launcher.di
 
-import com.jarvis.launcher.BuildConfig
+import com.jarvis.launcher.data.local.ApiKeyStore
 import com.jarvis.launcher.data.remote.OpenRouterApi
 import com.jarvis.launcher.util.Constants
 import com.squareup.moshi.Moshi
@@ -22,20 +22,18 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(apiKeyStore: ApiKeyStore): OkHttpClient {
         val authInterceptor = Interceptor { chain ->
-            val request = chain.request().newBuilder()
-                .addHeader("Authorization", "Bearer ${BuildConfig.OPENROUTER_API_KEY}")
-                .build()
-            chain.proceed(request)
+            val key = apiKeyStore.getApiKey()
+            val builder = chain.request().newBuilder()
+            if (key.isNotBlank()) {
+                builder.addHeader("Authorization", "Bearer $key")
+            }
+            chain.proceed(builder.build())
         }
 
         val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
-            }
+            level = HttpLoggingInterceptor.Level.NONE
         }
 
         return OkHttpClient.Builder()
