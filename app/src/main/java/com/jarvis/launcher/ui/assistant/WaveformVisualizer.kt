@@ -15,8 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.unit.dp
-import com.jarvis.launcher.ui.theme.JarvisCyan
-import com.jarvis.launcher.ui.theme.JarvisCyanDark
+import com.jarvis.launcher.ui.theme.LocalHudColors
 import kotlin.math.sin
 
 @Composable
@@ -24,6 +23,9 @@ fun WaveformVisualizer(
     isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val accent = LocalHudColors.current.accent
+    val accentDark = LocalHudColors.current.accentDark
+
     val transition = rememberInfiniteTransition(label = "waveform")
 
     val phase by transition.animateFloat(
@@ -69,8 +71,8 @@ fun WaveformVisualizer(
             val barAlpha = if (isActive) 0.5f + (amplitude * 0.5f) else 0.2f
 
             drawLine(
-                color = if (i % 3 == 0) JarvisCyan.copy(alpha = barAlpha)
-                else JarvisCyanDark.copy(alpha = barAlpha * 0.7f),
+                color = if (i % 3 == 0) accent.copy(alpha = barAlpha)
+                else accentDark.copy(alpha = barAlpha * 0.7f),
                 start = Offset(x, centerY - combinedHeight),
                 end = Offset(x, centerY + combinedHeight),
                 strokeWidth = barWidth,
@@ -79,7 +81,7 @@ fun WaveformVisualizer(
         }
 
         drawLine(
-            color = JarvisCyan.copy(alpha = 0.3f),
+            color = accent.copy(alpha = 0.3f),
             start = Offset(0f, centerY),
             end = Offset(size.width, centerY),
             strokeWidth = 1.dp.toPx()

@@ -29,8 +29,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.jarvis.launcher.data.model.AppInfo
-import com.jarvis.launcher.ui.theme.HudBorder
 import com.jarvis.launcher.ui.theme.HudSurface
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 @Composable
 fun AppItemCard(
@@ -53,6 +53,8 @@ fun AppItemCard(
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val borderColor = LocalHudColors.current.border
+
         Box(
             modifier = Modifier.size(64.dp),
             contentAlignment = Alignment.Center
@@ -64,7 +66,7 @@ fun AppItemCard(
                     size = Size(size.width, size.height)
                 )
                 drawRoundRect(
-                    color = HudBorder,
+                    color = borderColor,
                     cornerRadius = CornerRadius(8.dp.toPx()),
                     size = Size(size.width, size.height),
                     style = Stroke(width = 1.dp.toPx())

@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jarvis.launcher.ui.theme.HudTextDim
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 @Composable
 fun TranscriptDisplay(
@@ -24,6 +24,8 @@ fun TranscriptDisplay(
     responseText: String,
     modifier: Modifier = Modifier
 ) {
+    val accent = LocalHudColors.current.accent
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -56,7 +58,7 @@ fun TranscriptDisplay(
             Text(
                 text = responseText,
                 style = MaterialTheme.typography.bodyLarge,
-                color = JarvisCyan,
+                color = accent,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )

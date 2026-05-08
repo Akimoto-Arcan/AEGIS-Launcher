@@ -154,7 +154,8 @@ fun LauncherScreen(
                                 app?.let { launcherViewModel.launchApp(it) }
                             },
                             weatherData = weatherData,
-                            useFahrenheit = useFahrenheit
+                            useFahrenheit = useFahrenheit,
+                            alwaysListening = alwaysListening
                         )
                         1 -> AppDrawerScreen(
                             apps = apps,

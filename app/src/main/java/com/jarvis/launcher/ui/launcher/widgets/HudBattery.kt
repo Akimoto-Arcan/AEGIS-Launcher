@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
@@ -86,7 +87,21 @@ fun HudBattery(
     val sweepAngle = (batteryLevel / 100f) * 360f
 
     Box(
-        modifier = modifier.size(indicatorSize),
+        modifier = modifier
+            .size(indicatorSize)
+            .clickable {
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_BATTERY_SAVER_SETTINGS)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    context.startActivity(intent)
+                } catch (_: Exception) {
+                    try {
+                        val intent = Intent(Intent.ACTION_POWER_USAGE_SUMMARY)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        context.startActivity(intent)
+                    } catch (_: Exception) {}
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.size(indicatorSize)) {

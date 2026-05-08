@@ -17,15 +17,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import com.jarvis.launcher.ui.theme.JarvisCyan
-import com.jarvis.launcher.ui.theme.JarvisCyanDark
-import com.jarvis.launcher.ui.theme.JarvisCyanGlow
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 @Composable
 fun CircularVisualizer(
     isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val hudColors = LocalHudColors.current
+    val accent = hudColors.accent
+    val accentDark = hudColors.accentDark
+    val accentGlow = hudColors.accentGlow
+
     val transition = rememberInfiniteTransition(label = "visualizer")
 
     val rotation by transition.animateFloat(
@@ -65,7 +68,7 @@ fun CircularVisualizer(
         if (isActive) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(JarvisCyanGlow, Color.Transparent),
+                    colors = listOf(accentGlow, Color.Transparent),
                     center = center,
                     radius = maxRadius * ripple
                 ),
@@ -78,7 +81,7 @@ fun CircularVisualizer(
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    JarvisCyan.copy(alpha = 0.3f * pulse),
+                    accent.copy(alpha = 0.3f * pulse),
                     Color.Transparent
                 ),
                 center = center,
@@ -89,7 +92,7 @@ fun CircularVisualizer(
         )
 
         drawArc(
-            color = JarvisCyan.copy(alpha = if (isActive) pulse else 0.4f),
+            color = accent.copy(alpha = if (isActive) pulse else 0.4f),
             startAngle = rotation,
             sweepAngle = 90f,
             useCenter = false,
@@ -99,7 +102,7 @@ fun CircularVisualizer(
         )
 
         drawArc(
-            color = JarvisCyanDark.copy(alpha = if (isActive) pulse else 0.3f),
+            color = accentDark.copy(alpha = if (isActive) pulse else 0.3f),
             startAngle = -rotation * 0.7f,
             sweepAngle = 120f,
             useCenter = false,
@@ -109,7 +112,7 @@ fun CircularVisualizer(
         )
 
         drawArc(
-            color = JarvisCyan.copy(alpha = if (isActive) 0.8f * pulse else 0.3f),
+            color = accent.copy(alpha = if (isActive) 0.8f * pulse else 0.3f),
             startAngle = rotation * 1.5f,
             sweepAngle = 60f,
             useCenter = false,
@@ -120,7 +123,7 @@ fun CircularVisualizer(
 
         drawCircle(
             brush = Brush.radialGradient(
-                colors = listOf(Color.White, JarvisCyan, JarvisCyanDark),
+                colors = listOf(Color.White, accent, accentDark),
                 center = center,
                 radius = maxRadius * 0.15f
             ),

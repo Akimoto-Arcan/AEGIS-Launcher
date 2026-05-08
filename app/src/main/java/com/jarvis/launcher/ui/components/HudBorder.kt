@@ -1,6 +1,7 @@
 package com.jarvis.launcher.ui.components
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
@@ -8,8 +9,7 @@ import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.jarvis.launcher.ui.theme.HudBorder
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 /**
  * Draws L-shaped HUD corner brackets at each corner of the composable.
@@ -21,49 +21,54 @@ import com.jarvis.launcher.ui.theme.JarvisCyan
  * @param inset Padding inward from the composable edges.
  */
 fun Modifier.hudBorder(
-    color: Color = HudBorder,
-    glowColor: Color = JarvisCyan,
+    color: Color = Color.Unspecified,
+    glowColor: Color = Color.Unspecified,
     cornerLength: Dp = 20.dp,
     strokeWidth: Dp = 1.5.dp,
     glowRadius: Dp = 4.dp,
     inset: Dp = 0.dp
-): Modifier = this.drawBehind {
-    val cLen = cornerLength.toPx()
-    val sw = strokeWidth.toPx()
-    val ins = inset.toPx()
-    val glow = glowRadius.toPx()
+): Modifier = composed {
+    val hudColors = LocalHudColors.current
+    val resolvedColor = if (color == Color.Unspecified) hudColors.border else color
+    val resolvedGlowColor = if (glowColor == Color.Unspecified) hudColors.accent else glowColor
+    drawBehind {
+        val cLen = cornerLength.toPx()
+        val sw = strokeWidth.toPx()
+        val ins = inset.toPx()
+        val glow = glowRadius.toPx()
 
-    val left = ins
-    val top = ins
-    val right = size.width - ins
-    val bottom = size.height - ins
+        val left = ins
+        val top = ins
+        val right = size.width - ins
+        val bottom = size.height - ins
 
-    // Glow pass
-    drawIntoCanvas { canvas ->
-        val glowPaint = Paint().apply {
-            this.color = glowColor
-            this.style = PaintingStyle.Stroke
-            this.strokeWidth = sw * 2f
-            this.isAntiAlias = true
-            asFrameworkPaint().apply {
-                maskFilter = android.graphics.BlurMaskFilter(
-                    glow,
-                    android.graphics.BlurMaskFilter.Blur.NORMAL
-                )
+        // Glow pass
+        drawIntoCanvas { canvas ->
+            val glowPaint = Paint().apply {
+                this.color = resolvedGlowColor
+                this.style = PaintingStyle.Stroke
+                this.strokeWidth = sw * 2f
+                this.isAntiAlias = true
+                asFrameworkPaint().apply {
+                    maskFilter = android.graphics.BlurMaskFilter(
+                        glow,
+                        android.graphics.BlurMaskFilter.Blur.NORMAL
+                    )
+                }
             }
+            drawCornerBrackets(canvas, glowPaint, left, top, right, bottom, cLen)
         }
-        drawCornerBrackets(canvas, glowPaint, left, top, right, bottom, cLen)
-    }
 
-    // Crisp foreground pass
-    drawIntoCanvas { canvas ->
-        val fgPaint = Paint().apply {
-            this.color = color
-            this.style = PaintingStyle.Stroke
-            this.strokeWidth = sw
-            this.isAntiAlias = true
+        // Crisp foreground pass
+        drawIntoCanvas { canvas ->
+            val fgPaint = Paint().apply {
+                this.color = resolvedColor
+                this.style = PaintingStyle.Stroke
+                this.strokeWidth = sw
+                this.isAntiAlias = true
+            }
+            drawCornerBrackets(canvas, fgPaint, left, top, right, bottom, cLen)
         }
-        drawCornerBrackets(canvas, fgPaint, left, top, right, bottom, cLen)
     }
 }
 
@@ -103,15 +108,19 @@ private fun drawCornerBrackets(
 
 /**
  * Convenience overload that draws full HUD borders with default Jarvis styling.
+ * Uses [composed] so it can read the current accent color from [LocalHudColors].
  */
 fun Modifier.hudBorderAccent(
     cornerLength: Dp = 24.dp,
     strokeWidth: Dp = 2.dp,
     glowRadius: Dp = 6.dp
-): Modifier = hudBorder(
-    color = JarvisCyan.copy(alpha = 0.9f),
-    glowColor = JarvisCyan,
-    cornerLength = cornerLength,
-    strokeWidth = strokeWidth,
-    glowRadius = glowRadius
-)
+): Modifier = composed {
+    val accent = LocalHudColors.current.accent
+    hudBorder(
+        color = accent.copy(alpha = 0.9f),
+        glowColor = accent,
+        cornerLength = cornerLength,
+        strokeWidth = strokeWidth,
+        glowRadius = glowRadius
+    )
+}

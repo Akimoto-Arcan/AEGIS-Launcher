@@ -31,7 +31,7 @@ import com.jarvis.launcher.ui.theme.HudBackground
 import com.jarvis.launcher.ui.theme.HudBorder
 import com.jarvis.launcher.ui.theme.HudSurface
 import com.jarvis.launcher.ui.theme.HudText
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 @Composable
 fun AppDrawerScreen(
@@ -41,6 +41,7 @@ fun AppDrawerScreen(
     onAppClick: (AppInfo) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val accent = LocalHudColors.current.accent
     val transition = rememberInfiniteTransition(label = "drawer_scan")
     val scanY by transition.animateFloat(
         initialValue = 0f,
@@ -55,7 +56,7 @@ fun AppDrawerScreen(
     Box(modifier = modifier.fillMaxSize().background(HudBackground)) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawLine(
-                color = JarvisCyan.copy(alpha = 0.1f),
+                color = accent.copy(alpha = 0.1f),
                 start = Offset(0f, size.height * scanY),
                 end = Offset(size.width, size.height * scanY),
                 strokeWidth = 2.dp.toPx()
@@ -91,7 +92,7 @@ fun AppDrawerScreen(
                     value = searchQuery,
                     onValueChange = onSearchQueryChanged,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(color = HudText),
-                    cursorBrush = SolidColor(JarvisCyan),
+                    cursorBrush = SolidColor(accent),
                     modifier = Modifier.fillMaxWidth()
                 )
             }

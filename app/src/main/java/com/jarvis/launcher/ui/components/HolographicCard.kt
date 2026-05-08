@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jarvis.launcher.ui.theme.HudSurface
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 /**
  * A translucent card with HUD-style corner brackets and a continuously
@@ -40,7 +40,7 @@ import com.jarvis.launcher.ui.theme.JarvisCyan
 fun HolographicCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color = HudSurface,
-    scanLineColor: Color = JarvisCyan.copy(alpha = 0.10f),
+    scanLineColor: Color = LocalHudColors.current.accent.copy(alpha = 0.10f),
     scanLineDuration: Int = 3000,
     scanLineHeight: Dp = 40.dp,
     cornerLength: Dp = 20.dp,

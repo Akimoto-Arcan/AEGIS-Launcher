@@ -100,7 +100,7 @@ class PreferencesStore @Inject constructor(
         private const val DEFAULT_VOICE = "en-US-AndrewMultilingualNeural"
         private const val SEPARATOR = ","
         private const val DEFAULT_THEME = "Cyan"
-        const val MAX_FAVORITES = 16
+        const val MAX_FAVORITES = 24
 
         val COLOR_THEMES = listOf(
             HudColorTheme("Cyan", 0xFF00E5FF, 0xFF0097A7, 0x4D00E5FF),

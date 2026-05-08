@@ -29,14 +29,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jarvis.launcher.domain.voice.VoiceState
 import com.jarvis.launcher.ui.theme.HudBackground
-import com.jarvis.launcher.ui.theme.JarvisCyan
 import com.jarvis.launcher.ui.theme.JarvisAmber
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 @Composable
 fun AssistantOverlay(viewModel: AssistantViewModel) {
     val voiceState by viewModel.voiceState.collectAsState()
     val partialText by viewModel.partialText.collectAsState()
     val isVisible = voiceState !is VoiceState.Idle
+    val accent = LocalHudColors.current.accent
 
     AnimatedVisibility(
         visible = isVisible,
@@ -65,7 +66,7 @@ fun AssistantOverlay(viewModel: AssistantViewModel) {
                 Text(
                     text = "A.E.G.I.S.",
                     style = MaterialTheme.typography.titleLarge,
-                    color = JarvisCyan,
+                    color = accent,
                     textAlign = TextAlign.Center
                 )
 
@@ -74,7 +75,7 @@ fun AssistantOverlay(viewModel: AssistantViewModel) {
                 Text(
                     text = statusText(voiceState),
                     style = MaterialTheme.typography.labelSmall,
-                    color = statusColor(voiceState),
+                    color = statusColor(voiceState, accent),
                     textAlign = TextAlign.Center
                 )
 
@@ -158,8 +159,8 @@ private fun statusText(state: VoiceState): String = when (state) {
     is VoiceState.Idle -> ""
 }
 
-private fun statusColor(state: VoiceState): androidx.compose.ui.graphics.Color = when (state) {
+private fun statusColor(state: VoiceState, accent: androidx.compose.ui.graphics.Color): androidx.compose.ui.graphics.Color = when (state) {
     is VoiceState.Error -> JarvisAmber
-    is VoiceState.Speaking -> JarvisCyan
-    else -> JarvisCyan.copy(alpha = 0.7f)
+    is VoiceState.Speaking -> accent
+    else -> accent.copy(alpha = 0.7f)
 }

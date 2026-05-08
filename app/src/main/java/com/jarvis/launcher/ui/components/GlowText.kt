@@ -13,7 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 /**
  * Renders text with a glowing bloom effect behind it.
@@ -39,8 +39,8 @@ import com.jarvis.launcher.ui.theme.JarvisCyan
 fun GlowText(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = JarvisCyan,
-    glowColor: Color = JarvisCyan,
+    color: Color = LocalHudColors.current.accent,
+    glowColor: Color = LocalHudColors.current.accent,
     fontSize: TextUnit = 16.sp,
     fontWeight: FontWeight = FontWeight.Normal,
     fontFamily: FontFamily = FontFamily.Monospace,

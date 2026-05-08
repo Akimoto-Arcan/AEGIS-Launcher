@@ -53,6 +53,7 @@ fun HomeScreen(
     onOrbitAppClick: (String) -> Unit = {},
     weatherData: WeatherData? = null,
     useFahrenheit: Boolean = true,
+    alwaysListening: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
@@ -132,6 +133,17 @@ fun HomeScreen(
             )
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = if (alwaysListening) "SAY \"AEGIS\" TO ACTIVATE" else "TAP TO ACTIVATE",
+                color = HudTextDim,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 9.sp,
+                letterSpacing = 2.sp,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             Column(
                 modifier = Modifier.graphicsLayer { translationY = swipeUpOffset },

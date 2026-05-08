@@ -45,8 +45,13 @@ class SettingsViewModel @Inject constructor(
 
     fun previewVoice(voiceId: String) {
         viewModelScope.launch {
-            edgeTts.stop()
-            edgeTts.speak("Hello, I am Aegis.", voiceId)
+            try {
+                edgeTts.stop()
+                kotlinx.coroutines.delay(200)
+                edgeTts.speak("Hello, I am Aegis.", voiceId)
+            } catch (e: Exception) {
+                android.util.Log.e("Settings", "Voice preview failed", e)
+            }
         }
     }
 

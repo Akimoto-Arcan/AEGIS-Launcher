@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 @Composable
 fun AppLaunchAnimation(
@@ -21,6 +21,7 @@ fun AppLaunchAnimation(
     onFinished: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val accent = LocalHudColors.current.accent
     val progress = remember { Animatable(0f) }
 
     LaunchedEffect(isPlaying) {
@@ -43,8 +44,8 @@ fun AppLaunchAnimation(
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        JarvisCyan.copy(alpha = 0.4f * (1f - progress.value)),
-                        JarvisCyan.copy(alpha = 0.1f * (1f - progress.value)),
+                        accent.copy(alpha = 0.4f * (1f - progress.value)),
+                        accent.copy(alpha = 0.1f * (1f - progress.value)),
                         Color.Transparent
                     ),
                     center = center,
@@ -55,7 +56,7 @@ fun AppLaunchAnimation(
             )
 
             drawCircle(
-                color = JarvisCyan.copy(alpha = 0.6f * (1f - progress.value)),
+                color = accent.copy(alpha = 0.6f * (1f - progress.value)),
                 center = center,
                 radius = currentRadius * 0.3f
             )

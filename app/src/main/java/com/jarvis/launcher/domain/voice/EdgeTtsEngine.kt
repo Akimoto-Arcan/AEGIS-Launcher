@@ -195,14 +195,14 @@ class EdgeTtsEngine @Inject constructor(
 
     companion object {
         val VOICES = listOf(
-            "en-US-AndrewMultilingualNeural" to "Andrew (natural, warm)",
+            "en-US-AndrewMultilingualNeural" to "Andrew (warm, natural)",
             "en-US-DavisNeural" to "Davis (calm, smooth)",
             "en-US-BrandonNeural" to "Brandon (clear, confident)",
             "en-GB-RyanNeural" to "Ryan (British, deep)",
+            "en-US-JasonNeural" to "Jason (casual, friendly)",
+            "en-AU-WilliamNeural" to "William (Australian)",
+            "en-US-TonyNeural" to "Tony (conversational)",
             "en-GB-ThomasNeural" to "Thomas (British, mature)",
-            "en-US-GuyNeural" to "Guy (authoritative)",
-            "en-US-ChristopherNeural" to "Christopher (warm, rich)",
-            "en-US-EricNeural" to "Eric (steady, professional)",
         )
 
         private const val WSS_URL = "wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1"
