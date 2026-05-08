@@ -15,9 +15,7 @@ class LauncherActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            JarvisTheme {
-                LauncherScreen()
-            }
+            LauncherScreen()
         }
     }
 

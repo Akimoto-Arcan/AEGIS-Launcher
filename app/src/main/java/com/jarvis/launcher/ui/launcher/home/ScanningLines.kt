@@ -15,8 +15,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import com.jarvis.launcher.ui.theme.JarvisCyan
-import com.jarvis.launcher.ui.theme.JarvisCyanDark
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 /**
  * Draws subtle scanning effects:
@@ -52,12 +51,16 @@ fun ScanningLines(
         label = "scan_y_progress"
     )
 
+    val hudColors = LocalHudColors.current
+    val accent = hudColors.accent
+    val accentDark = hudColors.accentDark
+
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
 
         // ---- Static grid lines ----
-        val gridColor = JarvisCyanDark.copy(alpha = gridLineAlpha)
+        val gridColor = accentDark.copy(alpha = gridLineAlpha)
         val spacing = gridSpacingDp
         var y = 0f
         while (y < height) {
@@ -96,8 +99,8 @@ fun ScanningLines(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         Color.Transparent,
-                        JarvisCyan.copy(alpha = scanLineAlpha * 0.3f),
-                        JarvisCyan.copy(alpha = scanLineAlpha * 0.7f)
+                        accent.copy(alpha = scanLineAlpha * 0.3f),
+                        accent.copy(alpha = scanLineAlpha * 0.7f)
                     ),
                     startY = trailTop,
                     endY = trailBottom
@@ -110,7 +113,7 @@ fun ScanningLines(
         // Bright scan line
         if (scanY in 0f..height) {
             drawLine(
-                color = JarvisCyan.copy(alpha = scanLineAlpha),
+                color = accent.copy(alpha = scanLineAlpha),
                 start = Offset(0f, scanY),
                 end = Offset(width, scanY),
                 strokeWidth = 1.5f
@@ -120,7 +123,7 @@ fun ScanningLines(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         Color.Transparent,
-                        JarvisCyan.copy(alpha = scanLineAlpha * 0.4f),
+                        accent.copy(alpha = scanLineAlpha * 0.4f),
                         Color.Transparent
                     ),
                     startY = (scanY - 4f).coerceAtLeast(0f),

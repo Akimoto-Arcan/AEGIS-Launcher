@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.jarvis.launcher.ui.components.GlowText
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 import kotlinx.coroutines.delay
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -87,53 +87,16 @@ fun HudClock(
         letterSpacing = 2.sp
     )
 
+    val accent = LocalHudColors.current.accent
+
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.Bottom
     ) {
-        // Hours
-        GlowText(
-            text = hours,
-            style = mainStyle,
-            color = JarvisCyan,
-            glowColor = JarvisCyan,
-            glowAlpha = 0.35f
-        )
-
-        // Colon
-        GlowText(
-            text = ":",
-            style = colonStyle,
-            color = JarvisCyan,
-            glowColor = JarvisCyan,
-            glowAlpha = 0.2f
-        )
-
-        // Minutes
-        GlowText(
-            text = minutes,
-            style = mainStyle,
-            color = JarvisCyan,
-            glowColor = JarvisCyan,
-            glowAlpha = 0.35f
-        )
-
-        // Colon
-        GlowText(
-            text = ":",
-            style = colonStyle,
-            color = JarvisCyan.copy(alpha = secondsAlpha),
-            glowColor = JarvisCyan,
-            glowAlpha = 0.15f
-        )
-
-        // Seconds (with pulse)
-        GlowText(
-            text = seconds,
-            style = secondsStyle,
-            color = JarvisCyan.copy(alpha = secondsAlpha),
-            glowColor = JarvisCyan,
-            glowAlpha = 0.25f * secondsAlpha
-        )
+        GlowText(text = hours, style = mainStyle, color = accent, glowColor = accent, glowAlpha = 0.35f)
+        GlowText(text = ":", style = colonStyle, color = accent, glowColor = accent, glowAlpha = 0.2f)
+        GlowText(text = minutes, style = mainStyle, color = accent, glowColor = accent, glowAlpha = 0.35f)
+        GlowText(text = ":", style = colonStyle, color = accent.copy(alpha = secondsAlpha), glowColor = accent, glowAlpha = 0.15f)
+        GlowText(text = seconds, style = secondsStyle, color = accent.copy(alpha = secondsAlpha), glowColor = accent, glowAlpha = 0.25f * secondsAlpha)
     }
 }

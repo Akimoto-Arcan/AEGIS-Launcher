@@ -19,9 +19,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import com.jarvis.launcher.ui.theme.JarvisCyan
-import com.jarvis.launcher.ui.theme.JarvisCyanDark
-import com.jarvis.launcher.ui.theme.JarvisBlue
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 /**
  * Configuration for a single rotating ring.
@@ -55,58 +53,17 @@ data class RingConfig(
 fun RotatingRings(
     modifier: Modifier = Modifier
 ) {
-    val rings = remember {
+    val hudColors = LocalHudColors.current
+    val accent = hudColors.accent
+    val accentDark = hudColors.accentDark
+
+    val rings = remember(accent, accentDark) {
         listOf(
-            RingConfig(
-                radiusFraction = 0.48f,
-                strokeWidth = 1.2f,
-                dashLength = 30f,
-                gapLength = 20f,
-                durationMillis = 25000,
-                clockwise = true,
-                color = JarvisCyan,
-                alpha = 0.3f
-            ),
-            RingConfig(
-                radiusFraction = 0.42f,
-                strokeWidth = 0.8f,
-                dashLength = 15f,
-                gapLength = 25f,
-                durationMillis = 18000,
-                clockwise = false,
-                color = JarvisCyanDark,
-                alpha = 0.25f
-            ),
-            RingConfig(
-                radiusFraction = 0.36f,
-                strokeWidth = 1.5f,
-                dashLength = 40f,
-                gapLength = 15f,
-                durationMillis = 30000,
-                clockwise = true,
-                color = JarvisBlue,
-                alpha = 0.2f
-            ),
-            RingConfig(
-                radiusFraction = 0.30f,
-                strokeWidth = 0.6f,
-                dashLength = 8f,
-                gapLength = 30f,
-                durationMillis = 14000,
-                clockwise = false,
-                color = JarvisCyan,
-                alpha = 0.2f
-            ),
-            RingConfig(
-                radiusFraction = 0.55f,
-                strokeWidth = 0.5f,
-                dashLength = 50f,
-                gapLength = 10f,
-                durationMillis = 35000,
-                clockwise = true,
-                color = JarvisCyanDark,
-                alpha = 0.15f
-            )
+            RingConfig(0.48f, 1.2f, 30f, 20f, 25000, true, accent, 0.3f),
+            RingConfig(0.42f, 0.8f, 15f, 25f, 18000, false, accentDark, 0.25f),
+            RingConfig(0.36f, 1.5f, 40f, 15f, 30000, true, accentDark, 0.2f),
+            RingConfig(0.30f, 0.6f, 8f, 30f, 14000, false, accent, 0.2f),
+            RingConfig(0.55f, 0.5f, 50f, 10f, 35000, true, accentDark, 0.15f)
         )
     }
 

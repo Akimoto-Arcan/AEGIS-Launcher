@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jarvis.launcher.ui.theme.HudTextDim
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 /**
  * Placeholder weather display styled to match the HUD theme.
@@ -43,6 +43,7 @@ fun HudWeather(
     temperature: String = "-- °C",
     condition: String = "AWAITING DATA"
 ) {
+    val accent = LocalHudColors.current.accent
     val infiniteTransition = rememberInfiniteTransition(label = "weather_scan")
 
     val scanProgress by infiniteTransition.animateFloat(
@@ -67,7 +68,7 @@ fun HudWeather(
                         brush = Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                JarvisCyan.copy(alpha = 0.06f),
+                                accent.copy(alpha = 0.06f),
                                 Color.Transparent
                             ),
                             startY = (lineY - 8f).coerceAtLeast(0f),
@@ -96,7 +97,7 @@ fun HudWeather(
 
         Text(
             text = temperature,
-            color = JarvisCyan,
+            color = accent,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Light,
             fontSize = 22.sp,

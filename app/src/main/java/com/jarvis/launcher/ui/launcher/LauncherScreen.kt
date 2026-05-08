@@ -18,8 +18,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.jarvis.launcher.data.local.PreferencesStore
+import com.jarvis.launcher.domain.usecase.LaunchAppUseCase
 import com.jarvis.launcher.service.WakeWordService
 import com.jarvis.launcher.ui.assistant.AssistantOverlay
 import com.jarvis.launcher.ui.assistant.AssistantViewModel
@@ -27,6 +30,8 @@ import com.jarvis.launcher.ui.launcher.drawer.AppDrawerScreen
 import com.jarvis.launcher.ui.launcher.home.HomeScreen
 import com.jarvis.launcher.ui.settings.SettingsScreen
 import com.jarvis.launcher.ui.settings.SettingsViewModel
+import com.jarvis.launcher.ui.theme.HudColors
+import com.jarvis.launcher.ui.theme.JarvisTheme
 import com.jarvis.launcher.util.PermissionUtil
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -38,12 +43,21 @@ fun LauncherScreen(
 ) {
     val context = LocalContext.current
     val apps by launcherViewModel.filteredApps.collectAsState()
+    val allApps by launcherViewModel.apps.collectAsState()
     val searchQuery by launcherViewModel.searchQuery.collectAsState()
-    val apiKey by settingsViewModel.apiKey.collectAsState()
+    val favorites by settingsViewModel.favoriteApps.collectAsState()
+    val colorThemeName by settingsViewModel.colorThemeName.collectAsState()
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
     var showSettings by remember { mutableStateOf(!settingsViewModel.hasApiKey()) }
     var permissionsGranted by remember { mutableStateOf(false) }
+
+    val theme = PreferencesStore.getThemeByName(colorThemeName)
+    val hudColors = HudColors(
+        accent = Color(theme.primary),
+        accentDark = Color(theme.primaryDark),
+        accentGlow = Color(theme.glow)
+    )
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -76,33 +90,41 @@ fun LauncherScreen(
         }
     }
 
-    if (showSettings) {
-        SettingsScreen(
-            viewModel = settingsViewModel,
-            onDone = { showSettings = false }
-        )
-    } else {
-        Box(modifier = Modifier.fillMaxSize()) {
-            VerticalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1
-            ) { page ->
-                when (page) {
-                    0 -> HomeScreen(
-                        onJarvisActivate = { assistantViewModel.onManualActivate() },
-                        onSettingsOpen = { showSettings = true }
-                    )
-                    1 -> AppDrawerScreen(
-                        apps = apps,
-                        searchQuery = searchQuery,
-                        onSearchQueryChanged = launcherViewModel::onSearchQueryChanged,
-                        onAppClick = launcherViewModel::launchApp
-                    )
+    JarvisTheme(hudColors = hudColors) {
+        if (showSettings) {
+            SettingsScreen(
+                viewModel = settingsViewModel,
+                installedApps = allApps,
+                onDone = { showSettings = false }
+            )
+        } else {
+            Box(modifier = Modifier.fillMaxSize()) {
+                VerticalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    beyondViewportPageCount = 1
+                ) { page ->
+                    when (page) {
+                        0 -> HomeScreen(
+                            onJarvisActivate = { assistantViewModel.onManualActivate() },
+                            onSettingsOpen = { showSettings = true },
+                            favoritePackages = favorites,
+                            onOrbitAppClick = { pkg ->
+                                val app = allApps.find { it.packageName == pkg }
+                                app?.let { launcherViewModel.launchApp(it) }
+                            }
+                        )
+                        1 -> AppDrawerScreen(
+                            apps = apps,
+                            searchQuery = searchQuery,
+                            onSearchQueryChanged = launcherViewModel::onSearchQueryChanged,
+                            onAppClick = launcherViewModel::launchApp
+                        )
+                    }
                 }
-            }
 
-            AssistantOverlay(viewModel = assistantViewModel)
+                AssistantOverlay(viewModel = assistantViewModel)
+            }
         }
     }
 }

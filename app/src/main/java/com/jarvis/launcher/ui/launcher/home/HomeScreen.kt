@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,12 +20,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -37,29 +41,20 @@ import com.jarvis.launcher.ui.launcher.widgets.HudClock
 import com.jarvis.launcher.ui.launcher.widgets.HudDate
 import com.jarvis.launcher.ui.launcher.widgets.HudWeather
 import com.jarvis.launcher.ui.theme.HudTextDim
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
-/**
- * Main home screen composable for the JARVIS launcher.
- *
- * Layout:
- * - Full-screen [HudBackground] behind everything
- * - Top area: weather (left), battery (right)
- * - Centre-top: clock + date
- * - Bottom: "JARVIS" label with glow + "swipe up" indicator
- *
- * @param modifier Modifier for the root container.
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     onJarvisActivate: () -> Unit = {},
     onSettingsOpen: () -> Unit = {},
+    favoritePackages: List<String> = emptyList(),
+    onOrbitAppClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+    val hudColors = LocalHudColors.current
 
-    // Swipe-up indicator bounce animation
     val infiniteTransition = rememberInfiniteTransition(label = "home_screen")
     val swipeUpOffset by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -72,8 +67,22 @@ fun HomeScreen(
     )
 
     Box(modifier = modifier.fillMaxSize()) {
-        // Full-screen animated HUD background
         HudBackground()
+
+        // Orbiting apps layer
+        OrbitingApps(
+            favoritePackages = favoritePackages,
+            onAppClick = onOrbitAppClick
+        )
+
+        // Tappable center zone for settings
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(100.dp)
+                .clip(CircleShape)
+                .clickable { onSettingsOpen() }
+        )
 
         // Foreground UI content
         Column(
@@ -83,43 +92,31 @@ fun HomeScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ---- Top row: Weather (left) + Battery (right) ----
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                HudWeather(
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-
-                HudBattery(
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+                HudWeather(modifier = Modifier.padding(top = 8.dp))
+                HudBattery(modifier = Modifier.padding(top = 8.dp))
             }
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // ---- Clock ----
             HudClock()
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            // ---- Date ----
             HudDate()
 
-            // ---- Spacer pushes bottom content down ----
             Spacer(modifier = Modifier.weight(1f))
 
-            // ---- JARVIS label: tap = assistant, long press = settings ----
             GlowText(
                 text = "J A R V I S",
                 modifier = Modifier.combinedClickable(
                     onClick = { onJarvisActivate() },
                     onLongClick = { onSettingsOpen() }
                 ),
-                color = JarvisCyan,
-                glowColor = JarvisCyan,
+                color = hudColors.accent,
+                glowColor = hudColors.accent,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Light,
                 letterSpacing = 8.sp,
@@ -129,22 +126,17 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // ---- Swipe up indicator ----
             Column(
-                modifier = Modifier.graphicsLayer {
-                    translationY = swipeUpOffset
-                },
+                modifier = Modifier.graphicsLayer { translationY = swipeUpOffset },
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Chevron
                 Text(
-                    text = "⌃", // ⌃ up-pointing chevron
+                    text = "⌃",
                     color = HudTextDim,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 20.sp,
                     textAlign = TextAlign.Center
                 )
-
                 Text(
                     text = "SWIPE UP",
                     color = HudTextDim,

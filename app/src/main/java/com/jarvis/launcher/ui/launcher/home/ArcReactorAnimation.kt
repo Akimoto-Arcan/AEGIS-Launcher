@@ -22,8 +22,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.jarvis.launcher.ui.theme.JarvisCyan
-import com.jarvis.launcher.ui.theme.JarvisCyanDark
+import com.jarvis.launcher.ui.theme.LocalHudColors
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -47,6 +46,10 @@ fun ArcReactorAnimation(
     modifier: Modifier = Modifier,
     size: Dp = 220.dp
 ) {
+    val hudColors = LocalHudColors.current
+    val accentColor = hudColors.accent
+    val accentDark = hudColors.accentDark
+
     val infiniteTransition = rememberInfiniteTransition(label = "arc_reactor")
 
     // Outer glow pulse (scale factor)
@@ -111,8 +114,8 @@ fun ArcReactorAnimation(
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    JarvisCyan.copy(alpha = 0.08f),
-                    JarvisCyan.copy(alpha = 0.04f),
+                    accentColor.copy(alpha = 0.08f),
+                    accentColor.copy(alpha = 0.04f),
                     Color.Transparent
                 ),
                 center = center,
@@ -130,7 +133,7 @@ fun ArcReactorAnimation(
             strokeWidth = 2.5f,
             dashOn = 18f,
             dashOff = 12f,
-            color = JarvisCyan.copy(alpha = 0.7f)
+            color = accentColor.copy(alpha = 0.7f)
         )
 
         // ---- Segmented arc ring 2 (middle) ----
@@ -141,7 +144,7 @@ fun ArcReactorAnimation(
             strokeWidth = 3f,
             dashOn = 24f,
             dashOff = 8f,
-            color = JarvisCyan.copy(alpha = 0.55f)
+            color = accentColor.copy(alpha = 0.55f)
         )
 
         // ---- Segmented arc ring 3 (inner) ----
@@ -152,22 +155,22 @@ fun ArcReactorAnimation(
             strokeWidth = 2f,
             dashOn = 10f,
             dashOff = 16f,
-            color = JarvisCyanDark.copy(alpha = 0.6f)
+            color = accentDark.copy(alpha = 0.6f)
         )
 
         // ---- Inner hexagon detail ----
         rotate(degrees = hexRotation, pivot = center) {
-            drawHexagon(center, maxRadius * 0.38f, JarvisCyan.copy(alpha = 0.35f), strokeWidth = 1.5f)
+            drawHexagon(center, maxRadius * 0.38f, accentColor.copy(alpha = 0.35f), strokeWidth = 1.5f)
         }
 
         // Second hexagon, opposite rotation
         rotate(degrees = -hexRotation * 0.5f, pivot = center) {
-            drawHexagon(center, maxRadius * 0.28f, JarvisCyanDark.copy(alpha = 0.25f), strokeWidth = 1f)
+            drawHexagon(center, maxRadius * 0.28f, accentDark.copy(alpha = 0.25f), strokeWidth = 1f)
         }
 
         // ---- Inner triangle ----
         rotate(degrees = hexRotation * 0.7f, pivot = center) {
-            drawTriangle(center, maxRadius * 0.20f, JarvisCyan.copy(alpha = 0.3f), strokeWidth = 1f)
+            drawTriangle(center, maxRadius * 0.20f, accentColor.copy(alpha = 0.3f), strokeWidth = 1f)
         }
 
         // ---- Central bright core ----
@@ -175,8 +178,8 @@ fun ArcReactorAnimation(
             brush = Brush.radialGradient(
                 colors = listOf(
                     Color.White,
-                    JarvisCyan.copy(alpha = 0.9f),
-                    JarvisCyan.copy(alpha = 0.3f),
+                    accentColor.copy(alpha = 0.9f),
+                    accentColor.copy(alpha = 0.3f),
                     Color.Transparent
                 ),
                 center = center,

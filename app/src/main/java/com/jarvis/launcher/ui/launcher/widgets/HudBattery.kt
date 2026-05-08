@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jarvis.launcher.ui.theme.JarvisAmber
-import com.jarvis.launcher.ui.theme.JarvisCyan
+import com.jarvis.launcher.ui.theme.LocalHudColors
 
 private val BatteryRed = Color(0xFFFF1744)
 
@@ -78,7 +78,7 @@ fun HudBattery(
     }
 
     val batteryColor = when {
-        batteryLevel > 50 -> JarvisCyan
+        batteryLevel > 50 -> LocalHudColors.current.accent
         batteryLevel > 20 -> JarvisAmber
         else -> BatteryRed
     }

@@ -1,5 +1,8 @@
 package com.jarvis.launcher.ui.theme
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 val JarvisCyan = Color(0xFF00E5FF)
@@ -14,3 +17,16 @@ val HudSurfaceBright = Color(0x330A1929)
 val HudBorder = Color(0x8000E5FF)
 val HudText = Color(0xFFB2EBF2)
 val HudTextDim = Color(0x99B2EBF2)
+
+data class HudColors(
+    val accent: Color = JarvisCyan,
+    val accentDark: Color = JarvisCyanDark,
+    val accentGlow: Color = JarvisCyanGlow,
+    val background: Color = HudBackground,
+    val surface: Color = HudSurface,
+    val border: Color = accent.copy(alpha = 0.5f),
+    val text: Color = HudText,
+    val textDim: Color = HudTextDim
+)
+
+val LocalHudColors = compositionLocalOf { HudColors() }
