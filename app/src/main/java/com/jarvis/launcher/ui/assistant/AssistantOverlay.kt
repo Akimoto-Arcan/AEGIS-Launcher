@@ -124,6 +124,15 @@ fun AssistantOverlay(viewModel: AssistantViewModel) {
                         )
                     }
 
+                    is VoiceState.WaitingForFollowUp -> {
+                        WaveformVisualizer(isActive = false)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        TranscriptDisplay(
+                            userText = "",
+                            responseText = "Awaiting further instructions, sir..."
+                        )
+                    }
+
                     is VoiceState.Error -> {
                         TranscriptDisplay(
                             userText = "",
@@ -144,6 +153,7 @@ private fun statusText(state: VoiceState): String = when (state) {
     is VoiceState.Recognizing -> "PROCESSING SPEECH"
     is VoiceState.Processing -> "ANALYZING REQUEST"
     is VoiceState.Speaking -> "RESPONDING"
+    is VoiceState.WaitingForFollowUp -> "STANDING BY"
     is VoiceState.Error -> "SYSTEM ERROR"
     is VoiceState.Idle -> ""
 }

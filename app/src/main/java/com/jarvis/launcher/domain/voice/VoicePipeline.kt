@@ -18,6 +18,7 @@ sealed class VoiceState {
     data class Recognizing(val partialText: String) : VoiceState()
     data class Processing(val userText: String) : VoiceState()
     data class Speaking(val userText: String, val responseText: String) : VoiceState()
+    data object WaitingForFollowUp : VoiceState()
     data class Error(val message: String) : VoiceState()
 }
 
@@ -35,52 +36,79 @@ class VoicePipeline @Inject constructor(
     val partialText = speechRecognizerManager.partialText
     val detections = wakeWordDetector.detections
 
+    private val dismissPhrases = listOf(
+        "stop", "close", "dismiss", "goodbye", "bye",
+        "go away", "shut down", "that's all", "thank you jarvis",
+        "thanks jarvis", "never mind", "cancel"
+    )
+
     suspend fun onWakeWordDetected() {
-        if (_state.value != VoiceState.Idle && _state.value !is VoiceState.WakeWordDetected) return
+        if (_state.value != VoiceState.Idle &&
+            _state.value !is VoiceState.WakeWordDetected &&
+            _state.value !is VoiceState.WaitingForFollowUp
+        ) return
 
-        Log.d("VoicePipeline", "Activated, starting pipeline")
+        Log.d("VoicePipeline", "Activated")
         _state.value = VoiceState.WakeWordDetected
-
-        // Route audio through Bluetooth if connected
         audioRouter.startBluetoothSco()
-        delay(500)
+        delay(300)
 
-        _state.value = VoiceState.Listening
-        Log.d("VoicePipeline", "Listening for speech...")
-
-        val userSpeech = speechRecognizerManager.recognize()
-        Log.d("VoicePipeline", "Speech result: $userSpeech")
-
-        if (userSpeech.isNullOrBlank()) {
-            _state.value = VoiceState.Error("I didn't catch that, sir.")
-            delay(2000)
-            audioRouter.stopBluetoothSco()
-            _state.value = VoiceState.Idle
-            return
-        }
-
-        val cleanedSpeech = stripWakeWord(userSpeech)
-        _state.value = VoiceState.Processing(cleanedSpeech)
-        Log.d("VoicePipeline", "Sending to LLM: $cleanedSpeech")
-
-        try {
-            val response = withContext(Dispatchers.IO) {
-                assistantRepository.chat(cleanedSpeech)
-            }
-            Log.d("VoicePipeline", "LLM response: $response")
-
-            _state.value = VoiceState.Speaking(cleanedSpeech, response)
-            ttsManager.speak(response)
-        } catch (e: Exception) {
-            Log.e("VoicePipeline", "LLM error", e)
-            val errorMsg = "I apologize, sir. I'm having trouble connecting to my systems."
-            _state.value = VoiceState.Speaking(cleanedSpeech, errorMsg)
-            ttsManager.speak(errorMsg)
-        }
+        // Conversation loop — stays open until dismissed
+        conversationLoop()
 
         audioRouter.stopBluetoothSco()
-        delay(500)
+        delay(300)
         _state.value = VoiceState.Idle
+    }
+
+    private suspend fun conversationLoop() {
+        while (true) {
+            _state.value = VoiceState.Listening
+            Log.d("VoicePipeline", "Listening...")
+
+            val userSpeech = speechRecognizerManager.recognize()
+            Log.d("VoicePipeline", "Heard: $userSpeech")
+
+            if (userSpeech.isNullOrBlank()) {
+                _state.value = VoiceState.WaitingForFollowUp
+                delay(1500)
+                // Silence — listen again
+                continue
+            }
+
+            val cleaned = stripWakeWord(userSpeech)
+
+            // Check for dismiss commands
+            if (dismissPhrases.any { cleaned.lowercase().trim() == it ||
+                        cleaned.lowercase().trim().startsWith("$it ") }) {
+                _state.value = VoiceState.Speaking(cleaned, "Very well, sir.")
+                ttsManager.speak("Very well, sir.")
+                delay(500)
+                return
+            }
+
+            _state.value = VoiceState.Processing(cleaned)
+            Log.d("VoicePipeline", "Sending to LLM: $cleaned")
+
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    assistantRepository.chat(cleaned)
+                }
+                Log.d("VoicePipeline", "Response: $response")
+
+                _state.value = VoiceState.Speaking(cleaned, response)
+                ttsManager.speak(response)
+            } catch (e: Exception) {
+                Log.e("VoicePipeline", "LLM error", e)
+                val errorMsg = "I apologize, sir. I'm having trouble connecting to my systems."
+                _state.value = VoiceState.Speaking(cleaned, errorMsg)
+                ttsManager.speak(errorMsg)
+            }
+
+            // After speaking, wait for follow-up
+            _state.value = VoiceState.WaitingForFollowUp
+            delay(500)
+        }
     }
 
     fun manualActivate() {
