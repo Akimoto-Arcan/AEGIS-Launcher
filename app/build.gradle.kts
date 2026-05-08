@@ -1,9 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+}
+
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -20,7 +27,7 @@ android {
         buildConfigField(
             "String",
             "OPENROUTER_API_KEY",
-            "\"${project.findProperty("OPENROUTER_API_KEY") ?: ""}\""
+            "\"${localProps.getProperty("OPENROUTER_API_KEY") ?: project.findProperty("OPENROUTER_API_KEY") ?: ""}\""
         )
     }
 
