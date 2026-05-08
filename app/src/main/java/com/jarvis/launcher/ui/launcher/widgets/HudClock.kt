@@ -136,11 +136,27 @@ private fun openClockApp(context: Context) {
     }
 }
 
+private val clockPackages = setOf(
+    "com.sec.android.app.clockpackage",
+    "com.samsung.android.app.clockpackage",
+    "com.google.android.deskclock",
+    "com.android.deskclock",
+    "com.oneplus.deskclock",
+    "com.coloros.alarmclock",
+    "com.oppo.alarmclock",
+)
+
 private fun getNextAlarmText(context: Context): String? {
     try {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
             ?: return null
         val alarmInfo = alarmManager.nextAlarmClock ?: return null
+
+        // Only show alarms from actual clock apps, not random app timers
+        val showIntent = alarmInfo.showIntent
+        val alarmPackage = showIntent?.creatorPackage
+        if (alarmPackage != null && alarmPackage !in clockPackages) return null
+
         val triggerTime = alarmInfo.triggerTime
         val now = System.currentTimeMillis()
 
@@ -156,10 +172,13 @@ private fun getNextAlarmText(context: Context): String? {
 
         val formatted = alarmTime.format(DateTimeFormatter.ofPattern("h:mm a"))
 
-        val diffMinutes = diffMs / (1000 * 60)
+        val totalMinutes = diffMs / (1000 * 60)
+        val h = totalMinutes / 60
+        val m = totalMinutes % 60
         val timeUntil = when {
-            diffMinutes < 60 -> "${diffMinutes}m"
-            else -> "${diffHours}h ${diffMinutes % 60}m"
+            h == 0L -> "${m}m"
+            m == 0L -> "${h}h"
+            else -> "${h}h ${m}m"
         }
 
         return "ALARM $formatted ($timeUntil)"
