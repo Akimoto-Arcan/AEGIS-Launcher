@@ -32,18 +32,32 @@ class EdgeTtsEngine @Inject constructor(
 
     private var mediaPlayer: MediaPlayer? = null
 
-    suspend fun speak(text: String, voice: String = "en-US-AndrewMultilingualNeural"): Boolean =
-        withContext(Dispatchers.IO) {
-            try {
-                val audioFile = synthesize(text, voice) ?: return@withContext false
-                playAudio(audioFile)
-                audioFile.delete()
-                true
-            } catch (e: Exception) {
-                Log.e("EdgeTTS", "Failed to speak", e)
-                false
+    suspend fun speak(text: String, voice: String = "en-US-AndrewMultilingualNeural"): Boolean {
+        try {
+            Log.d("EdgeTTS", "Starting synthesis: voice=$voice text=$text")
+            val audioFile = withContext(Dispatchers.IO) { synthesize(text, voice) }
+
+            if (audioFile == null) {
+                Log.e("EdgeTTS", "Synthesis returned null — no audio data received")
+                return false
             }
+
+            Log.d("EdgeTTS", "Synthesis complete, file size=${audioFile.length()} bytes")
+
+            if (audioFile.length() < 100) {
+                Log.e("EdgeTTS", "Audio file too small (${audioFile.length()} bytes), likely empty")
+                audioFile.delete()
+                return false
+            }
+
+            withContext(Dispatchers.Main) { playAudio(audioFile) }
+            audioFile.delete()
+            return true
+        } catch (e: Exception) {
+            Log.e("EdgeTTS", "Failed to speak", e)
+            return false
         }
+    }
 
     private suspend fun synthesize(text: String, voice: String): File? =
         suspendCancellableCoroutine { cont ->
@@ -62,8 +76,12 @@ class EdgeTtsEngine @Inject constructor(
             var audioStarted = false
             var resumed = false
 
+            Log.d("EdgeTTS", "Connecting WebSocket...")
+
             val ws = client.newWebSocket(request, object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
+                    Log.d("EdgeTTS", "WebSocket connected")
+
                     val configMsg = "Content-Type:application/json; charset=utf-8\r\n" +
                             "Path:speech.config\r\n\r\n" +
                             """{"context":{"synthesis":{"audio":{"metadataoptions":{""" +
@@ -78,7 +96,9 @@ class EdgeTtsEngine @Inject constructor(
                         .replace("\"", "&quot;")
                         .replace("'", "&apos;")
 
-                    val lang = if (voice.startsWith("en-GB")) "en-GB" else "en-US"
+                    val lang = if (voice.startsWith("en-GB") || voice.startsWith("en-AU")) {
+                        voice.substring(0, 5)
+                    } else "en-US"
 
                     val ssmlMsg = "X-RequestId:$requestId\r\n" +
                             "Content-Type:application/ssml+xml\r\n" +
@@ -89,12 +109,12 @@ class EdgeTtsEngine @Inject constructor(
                             "<prosody pitch='-5%'>$escapedText</prosody>" +
                             "</voice></speak>"
                     webSocket.send(ssmlMsg)
+                    Log.d("EdgeTTS", "SSML sent")
                 }
 
                 override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
                     try {
                         val data = bytes.toByteArray()
-                        // Audio data has a header: first 2 bytes = header length (big-endian)
                         if (data.size > 2) {
                             val headerLen = ((data[0].toInt() and 0xFF) shl 8) or
                                     (data[1].toInt() and 0xFF)
@@ -116,6 +136,7 @@ class EdgeTtsEngine @Inject constructor(
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
                     if (text.contains("turn.end")) {
+                        Log.d("EdgeTTS", "Synthesis turn.end received, audioStarted=$audioStarted")
                         try { outputStream.close() } catch (_: Exception) {}
                         webSocket.close(1000, null)
                         if (!resumed) {
@@ -126,7 +147,7 @@ class EdgeTtsEngine @Inject constructor(
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                    Log.e("EdgeTTS", "WebSocket failure", t)
+                    Log.e("EdgeTTS", "WebSocket failure: ${t.message}", t)
                     try { outputStream.close() } catch (_: Exception) {}
                     if (!resumed) {
                         resumed = true
@@ -135,6 +156,7 @@ class EdgeTtsEngine @Inject constructor(
                 }
 
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                    Log.d("EdgeTTS", "WebSocket closed: code=$code")
                     try { outputStream.close() } catch (_: Exception) {}
                     if (!resumed) {
                         resumed = true
@@ -153,16 +175,19 @@ class EdgeTtsEngine @Inject constructor(
     private suspend fun playAudio(file: File) = suspendCancellableCoroutine { cont ->
         var resumed = false
         try {
+            Log.d("EdgeTTS", "Playing audio: ${file.absolutePath} (${file.length()} bytes)")
             mediaPlayer?.release()
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(file.absolutePath)
                 setOnCompletionListener {
+                    Log.d("EdgeTTS", "Playback complete")
                     if (!resumed) {
                         resumed = true
                         cont.resume(Unit)
                     }
                 }
-                setOnErrorListener { _, _, _ ->
+                setOnErrorListener { _, what, extra ->
+                    Log.e("EdgeTTS", "Playback error: what=$what extra=$extra")
                     if (!resumed) {
                         resumed = true
                         cont.resume(Unit)
@@ -171,6 +196,7 @@ class EdgeTtsEngine @Inject constructor(
                 }
                 prepare()
                 start()
+                Log.d("EdgeTTS", "Playback started")
             }
 
             cont.invokeOnCancellation {
@@ -179,7 +205,7 @@ class EdgeTtsEngine @Inject constructor(
                 mediaPlayer = null
             }
         } catch (e: Exception) {
-            Log.e("EdgeTTS", "Playback error", e)
+            Log.e("EdgeTTS", "Playback setup error", e)
             if (!resumed) {
                 resumed = true
                 cont.resume(Unit)
@@ -188,8 +214,12 @@ class EdgeTtsEngine @Inject constructor(
     }
 
     fun stop() {
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
+        try {
+            mediaPlayer?.stop()
+        } catch (_: Exception) {}
+        try {
+            mediaPlayer?.release()
+        } catch (_: Exception) {}
         mediaPlayer = null
     }
 

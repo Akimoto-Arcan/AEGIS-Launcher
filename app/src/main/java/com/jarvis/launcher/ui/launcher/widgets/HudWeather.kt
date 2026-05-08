@@ -36,20 +36,29 @@ fun HudWeather(
     Column(
         modifier = modifier
             .clickable {
-                val intents = listOf(
-                    Intent(Intent.ACTION_VIEW, android.net.Uri.parse("dynact://vel498702545/weather")),
-                    Intent(Intent.ACTION_MAIN).apply {
-                        setClassName("com.sec.android.daemonapp", "com.sec.android.daemonapp.ap.hero.WeatherActivity")
-                    },
-                    Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://weather.com"))
+                val weatherPackages = listOf(
+                    "com.sec.android.daemonapp",
+                    "com.samsung.android.weather",
+                    "com.google.android.apps.weather",
+                    "com.accuweather.android",
+                    "com.weather.Weather",
                 )
-                for (intent in intents) {
+                val pm = context.packageManager
+                for (pkg in weatherPackages) {
                     try {
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        context.startActivity(intent)
-                        return@clickable
+                        val intent = pm.getLaunchIntentForPackage(pkg)
+                        if (intent != null) {
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            context.startActivity(intent)
+                            return@clickable
+                        }
                     } catch (_: Exception) {}
                 }
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://wttr.in"))
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    context.startActivity(intent)
+                } catch (_: Exception) {}
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
