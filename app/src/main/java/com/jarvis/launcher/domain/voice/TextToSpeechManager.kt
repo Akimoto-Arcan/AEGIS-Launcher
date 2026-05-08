@@ -3,6 +3,8 @@ package com.jarvis.launcher.domain.voice
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.speech.tts.Voice
+import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,30 +32,91 @@ class TextToSpeechManager @Inject constructor(
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 tts?.language = Locale.UK
-                tts?.setPitch(0.9f)
-                tts?.setSpeechRate(1.05f)
-                selectBestVoice()
+                selectJarvisVoice()
+                tts?.setPitch(0.85f)
+                tts?.setSpeechRate(1.0f)
                 _isReady.value = true
             }
         }
     }
 
-    private fun selectBestVoice() {
+    private fun selectJarvisVoice() {
         val voices = tts?.voices ?: return
-        val preferred = voices.filter {
-            it.locale.language == "en" &&
-                (it.locale.country == "GB" || it.locale.country == "UK") &&
-                !it.isNetworkConnectionRequired
-        }.minByOrNull { it.quality }
 
-        if (preferred != null) {
-            tts?.voice = preferred
-        } else {
-            val fallback = voices.filter {
-                it.locale.language == "en" && !it.isNetworkConnectionRequired
-            }.minByOrNull { it.quality }
-            fallback?.let { tts?.voice = it }
+        Log.d("TTS", "Available voices: ${voices.map { "${it.name} [${it.locale}]" }}")
+
+        // Known male British voice identifiers across TTS engines
+        val knownMaleVoices = listOf(
+            "en-gb-x-rjs",    // Google TTS male British (Ryan-like)
+            "en-gb-x-gbd",    // Google TTS male British variant
+            "en-gb-x-fis",    // Google TTS male British variant
+            "en-GB-male",
+            "eng-gbr-male",
+            "Brian",           // Samsung TTS male British
+        )
+
+        val englishGbVoices = voices.filter {
+            it.locale.language == "en" &&
+            (it.locale.country == "GB" || it.locale.country == "UK" || it.locale.country == "")
         }
+
+        // Priority 1: Known male British voice by name substring
+        val knownMale = englishGbVoices.firstOrNull { voice ->
+            knownMaleVoices.any { id -> voice.name.contains(id, ignoreCase = true) }
+        }
+        if (knownMale != null) {
+            tts?.voice = knownMale
+            Log.d("TTS", "Selected known male voice: ${knownMale.name}")
+            return
+        }
+
+        // Priority 2: Any en-GB voice with "male" in the name
+        val maleByName = englishGbVoices.firstOrNull {
+            it.name.contains("male", ignoreCase = true) &&
+            !it.name.contains("female", ignoreCase = true)
+        }
+        if (maleByName != null) {
+            tts?.voice = maleByName
+            Log.d("TTS", "Selected male-named voice: ${maleByName.name}")
+            return
+        }
+
+        // Priority 3: Any en-GB voice with features containing "male"
+        val maleByFeature = englishGbVoices.firstOrNull { voice ->
+            voice.features?.any { it.contains("male", ignoreCase = true) } == true
+        }
+        if (maleByFeature != null) {
+            tts?.voice = maleByFeature
+            Log.d("TTS", "Selected male-featured voice: ${maleByFeature.name}")
+            return
+        }
+
+        // Priority 4: en-GB local voice (prefer non-network for speed)
+        val localGb = englishGbVoices
+            .filter { !it.isNetworkConnectionRequired }
+            .sortedBy { it.quality }
+            .firstOrNull()
+        if (localGb != null) {
+            tts?.voice = localGb
+            Log.d("TTS", "Selected local en-GB voice: ${localGb.name}")
+            return
+        }
+
+        // Priority 5: Any en-US male voice as last resort
+        val anyMale = voices.filter {
+            it.locale.language == "en"
+        }.firstOrNull { voice ->
+            knownMaleVoices.any { id -> voice.name.contains(id, ignoreCase = true) } ||
+            (voice.name.contains("male", ignoreCase = true) &&
+             !voice.name.contains("female", ignoreCase = true))
+        }
+        if (anyMale != null) {
+            tts?.voice = anyMale
+            Log.d("TTS", "Selected any-English male voice: ${anyMale.name}")
+            return
+        }
+
+        Log.d("TTS", "No male voice found, using default en-GB")
     }
 
     suspend fun speak(text: String) = suspendCancellableCoroutine { cont ->
@@ -86,7 +149,7 @@ class TextToSpeechManager @Inject constructor(
 
         val params = android.os.Bundle().apply {
             putInt(
-                android.speech.tts.TextToSpeech.Engine.KEY_PARAM_STREAM,
+                TextToSpeech.Engine.KEY_PARAM_STREAM,
                 android.media.AudioManager.STREAM_MUSIC
             )
         }
