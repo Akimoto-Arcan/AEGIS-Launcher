@@ -424,20 +424,6 @@ fun SettingsScreen(
                 color = HudBorder
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "VOICE TIP",
-                style = MaterialTheme.typography.labelLarge,
-                color = hudColors.accent
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "For the best AEGIS voice, install Google Text-to-Speech from the Play Store, then go to Settings → General → Text-to-Speech → Google TTS → Install voice data → English (UK). This gives AEGIS a proper British male voice.",
-                style = MaterialTheme.typography.bodySmall,
-                color = HudBorder
-            )
-
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
