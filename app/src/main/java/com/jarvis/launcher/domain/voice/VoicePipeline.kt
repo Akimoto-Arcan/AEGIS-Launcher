@@ -38,8 +38,8 @@ class VoicePipeline @Inject constructor(
 
     private val dismissPhrases = listOf(
         "stop", "close", "dismiss", "goodbye", "bye",
-        "go away", "shut down", "that's all", "thank you jarvis",
-        "thanks jarvis", "never mind", "cancel"
+        "go away", "shut down", "that's all", "thank you aegis",
+        "thanks aegis", "never mind", "cancel"
     )
 
     suspend fun onWakeWordDetected() {
@@ -124,7 +124,7 @@ class VoicePipeline @Inject constructor(
 
     private fun stripWakeWord(text: String): String {
         val lower = text.lowercase().trim()
-        val prefixes = listOf("jarvis ", "hey jarvis ", "ok jarvis ", "okay jarvis ")
+        val prefixes = listOf("aegis ", "hey aegis ", "ok aegis ", "okay aegis ")
         for (prefix in prefixes) {
             if (lower.startsWith(prefix)) {
                 return text.substring(prefix.length).trim()

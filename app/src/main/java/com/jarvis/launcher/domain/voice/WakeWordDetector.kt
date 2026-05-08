@@ -30,10 +30,10 @@ class WakeWordDetector @Inject constructor(
     private var enabled = false
 
     private val wakePatterns = listOf(
-        "jarvis",
-        "hey jarvis",
-        "ok jarvis",
-        "okay jarvis"
+        "aegis",
+        "hey aegis",
+        "ok aegis",
+        "okay aegis"
     )
 
     suspend fun startListening() = withContext(Dispatchers.Main) {
@@ -99,7 +99,7 @@ class WakeWordDetector @Inject constructor(
 
             if (isWakeWord && (confidence > 0.5f || confidences == null)) {
                 Log.d("WakeWord", "Detected: '$text' (confidence: $confidence)")
-                _detections.tryEmit("jarvis")
+                _detections.tryEmit("aegis")
                 // Pause detection while pipeline runs
                 if (enabled) {
                     enabled = false

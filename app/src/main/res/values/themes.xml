@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Jarvis" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Aegis" parent="android:Theme.Material.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/hud_background</item>
     </style>
 
-    <style name="Theme.Jarvis.Launcher">
+    <style name="Theme.Aegis.Launcher">
         <item name="android:windowShowWallpaper">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">false</item>

@@ -18,6 +18,7 @@ class SettingsViewModel @Inject constructor(
     val colorThemeName: StateFlow<String> = preferencesStore.colorThemeName
     val useFahrenheit: StateFlow<Boolean> = preferencesStore.useFahrenheit
     val voiceId: StateFlow<String> = preferencesStore.voiceId
+    val alwaysListening: StateFlow<Boolean> = preferencesStore.alwaysListening
 
     fun hasApiKey(): Boolean = apiKeyStore.hasApiKey()
 
@@ -34,4 +35,6 @@ class SettingsViewModel @Inject constructor(
     fun toggleTemperatureUnit() = preferencesStore.setUseFahrenheit(!preferencesStore.getUseFahrenheit())
 
     fun setVoice(id: String) = preferencesStore.setVoiceId(id)
+
+    fun toggleAlwaysListening() = preferencesStore.setAlwaysListening(!preferencesStore.getAlwaysListening())
 }

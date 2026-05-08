@@ -7,7 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
 @Composable
-fun JarvisTheme(
+fun AegisTheme(
     hudColors: HudColors = HudColors(),
     content: @Composable () -> Unit
 ) {

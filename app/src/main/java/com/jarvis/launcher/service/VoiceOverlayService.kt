@@ -22,7 +22,7 @@ import com.jarvis.launcher.domain.voice.VoicePipeline
 import com.jarvis.launcher.domain.voice.VoiceState
 import com.jarvis.launcher.ui.assistant.AssistantOverlay
 import com.jarvis.launcher.ui.assistant.AssistantViewModel
-import com.jarvis.launcher.ui.theme.JarvisTheme
+import com.jarvis.launcher.ui.theme.AegisTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -87,7 +87,7 @@ class VoiceOverlayService : Service(), LifecycleOwner, ViewModelStoreOwner,
             setViewTreeLifecycleOwner(this@VoiceOverlayService)
             setViewTreeSavedStateRegistryOwner(this@VoiceOverlayService)
             setContent {
-                JarvisTheme {
+                AegisTheme {
                     OverlayContent()
                 }
             }

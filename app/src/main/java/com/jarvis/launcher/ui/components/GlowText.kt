@@ -19,7 +19,7 @@ import com.jarvis.launcher.ui.theme.JarvisCyan
  * Renders text with a glowing bloom effect behind it.
  *
  * A blurred, slightly larger copy of the text is layered behind the main text
- * to create a neon / holographic glow effect consistent with the JARVIS HUD.
+ * to create a neon / holographic glow effect consistent with the AEGIS HUD.
  *
  * @param text The text to display.
  * @param modifier Modifier applied to the outer container.

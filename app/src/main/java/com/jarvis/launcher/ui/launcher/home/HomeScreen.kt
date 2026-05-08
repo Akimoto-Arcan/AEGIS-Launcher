@@ -47,7 +47,7 @@ import com.jarvis.launcher.ui.theme.LocalHudColors
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
-    onJarvisActivate: () -> Unit = {},
+    onAegisActivate: () -> Unit = {},
     onSettingsOpen: () -> Unit = {},
     favoritePackages: List<String> = emptyList(),
     onOrbitAppClick: (String) -> Unit = {},
@@ -117,9 +117,9 @@ fun HomeScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             GlowText(
-                text = "J A R V I S",
+                text = "A E G I S",
                 modifier = Modifier.combinedClickable(
-                    onClick = { onJarvisActivate() },
+                    onClick = { onAegisActivate() },
                     onLongClick = { onSettingsOpen() }
                 ),
                 color = hudColors.accent,

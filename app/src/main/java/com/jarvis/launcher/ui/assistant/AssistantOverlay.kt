@@ -63,7 +63,7 @@ fun AssistantOverlay(viewModel: AssistantViewModel) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "J.A.R.V.I.S.",
+                    text = "A.E.G.I.S.",
                     style = MaterialTheme.typography.titleLarge,
                     color = JarvisCyan,
                     textAlign = TextAlign.Center

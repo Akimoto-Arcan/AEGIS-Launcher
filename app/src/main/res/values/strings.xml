@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">JARVIS</string>
-    <string name="wake_word_notification_title">JARVIS Active</string>
+    <string name="app_name">AEGIS</string>
+    <string name="wake_word_notification_title">AEGIS Active</string>
     <string name="wake_word_notification_text">Listening for wake word…</string>
     <string name="channel_wake_word">Wake Word Service</string>
 </resources>

@@ -21,7 +21,7 @@ class PreferencesStore @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val prefs: SharedPreferences =
-        context.getSharedPreferences("jarvis_prefs", Context.MODE_PRIVATE)
+        context.getSharedPreferences("aegis_prefs", Context.MODE_PRIVATE)
 
     private val _favoriteApps = MutableStateFlow(getFavoriteApps())
     val favoriteApps: StateFlow<List<String>> = _favoriteApps.asStateFlow()
@@ -71,6 +71,16 @@ class PreferencesStore @Inject constructor(
         _voiceId.value = id
     }
 
+    private val _alwaysListening = MutableStateFlow(getAlwaysListening())
+    val alwaysListening: StateFlow<Boolean> = _alwaysListening.asStateFlow()
+
+    fun getAlwaysListening(): Boolean = prefs.getBoolean(KEY_ALWAYS_LISTEN, false)
+
+    fun setAlwaysListening(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_ALWAYS_LISTEN, enabled).apply()
+        _alwaysListening.value = enabled
+    }
+
     private val _useFahrenheit = MutableStateFlow(getUseFahrenheit())
     val useFahrenheit: StateFlow<Boolean> = _useFahrenheit.asStateFlow()
 
@@ -84,6 +94,7 @@ class PreferencesStore @Inject constructor(
     companion object {
         private const val KEY_FAVORITES = "favorite_apps"
         private const val KEY_COLOR_THEME = "color_theme"
+        private const val KEY_ALWAYS_LISTEN = "always_listening"
         private const val KEY_VOICE = "voice_id"
         private const val KEY_TEMP_UNIT = "use_fahrenheit"
         private const val DEFAULT_VOICE = "en-US-AndrewMultilingualNeural"

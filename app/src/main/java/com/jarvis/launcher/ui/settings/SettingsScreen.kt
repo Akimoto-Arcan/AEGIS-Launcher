@@ -86,7 +86,7 @@ fun SettingsScreen(
         item {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "JARVIS CONFIGURATION",
+                text = "AEGIS CONFIGURATION",
                 style = MaterialTheme.typography.titleLarge,
                 color = hudColors.accent
             )
@@ -141,7 +141,7 @@ fun SettingsScreen(
             val currentVoice by viewModel.voiceId.collectAsState()
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "JARVIS VOICE",
+                text = "AEGIS VOICE",
                 style = MaterialTheme.typography.labelLarge,
                 color = hudColors.accent
             )
@@ -165,6 +165,44 @@ fun SettingsScreen(
                         color = if (isSelected) hudColors.accent else HudBorder,
                         style = MaterialTheme.typography.bodyMedium
                     )
+                }
+            }
+        }
+
+        // ===== ACTIVATION MODE =====
+        item {
+            val alwaysListening by viewModel.alwaysListening.collectAsState()
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "ACTIVATION MODE",
+                style = MaterialTheme.typography.labelLarge,
+                color = hudColors.accent
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (alwaysListening) "Always listening for \"Aegis\""
+                else "Tap only — no background listening",
+                style = MaterialTheme.typography.bodySmall,
+                color = HudBorder
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                listOf(false to "TAP ONLY", true to "ALWAYS LISTEN").forEach { (mode, label) ->
+                    val isSelected = alwaysListening == mode
+                    OutlinedButton(
+                        onClick = { if (!isSelected) viewModel.toggleAlwaysListening() },
+                        border = BorderStroke(
+                            1.dp,
+                            if (isSelected) hudColors.accent else HudBorder
+                        ),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            color = if (isSelected) hudColors.accent else HudBorder,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
                 }
             }
         }
@@ -395,7 +433,7 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "For the best JARVIS voice, install Google Text-to-Speech from the Play Store, then go to Settings → General → Text-to-Speech → Google TTS → Install voice data → English (UK). This gives JARVIS a proper British male voice.",
+                text = "For the best AEGIS voice, install Google Text-to-Speech from the Play Store, then go to Settings → General → Text-to-Speech → Google TTS → Install voice data → English (UK). This gives AEGIS a proper British male voice.",
                 style = MaterialTheme.typography.bodySmall,
                 color = HudBorder
             )

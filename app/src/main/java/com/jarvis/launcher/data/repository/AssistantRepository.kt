@@ -13,7 +13,7 @@ class AssistantRepository @Inject constructor(
 ) {
 
     private val conversationHistory = mutableListOf(
-        ChatMessage(role = "system", content = Constants.JARVIS_SYSTEM_PROMPT)
+        ChatMessage(role = "system", content = Constants.AEGIS_SYSTEM_PROMPT)
     )
 
     suspend fun chat(userMessage: String): String {

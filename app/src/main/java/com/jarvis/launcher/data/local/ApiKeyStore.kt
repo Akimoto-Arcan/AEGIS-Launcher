@@ -22,7 +22,7 @@ class ApiKeyStore @Inject constructor(
 
     private val prefs: SharedPreferences = EncryptedSharedPreferences.create(
         context,
-        "jarvis_secure_prefs",
+        "aegis_secure_prefs",
         masterKey,
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM

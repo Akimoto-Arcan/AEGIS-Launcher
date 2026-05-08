@@ -34,7 +34,7 @@ import com.jarvis.launcher.ui.launcher.home.HomeScreen
 import com.jarvis.launcher.ui.settings.SettingsScreen
 import com.jarvis.launcher.ui.settings.SettingsViewModel
 import com.jarvis.launcher.ui.theme.HudColors
-import com.jarvis.launcher.ui.theme.JarvisTheme
+import com.jarvis.launcher.ui.theme.AegisTheme
 import com.jarvis.launcher.util.PermissionUtil
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -56,6 +56,7 @@ fun LauncherScreen(
     val favorites by settingsViewModel.favoriteApps.collectAsState()
     val colorThemeName by settingsViewModel.colorThemeName.collectAsState()
     val useFahrenheit by settingsViewModel.useFahrenheit.collectAsState()
+    val alwaysListening by settingsViewModel.alwaysListening.collectAsState()
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
 
     var showSettings by remember { mutableStateOf(!settingsViewModel.hasApiKey()) }
@@ -98,9 +99,6 @@ fun LauncherScreen(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         permissionsGranted = results.values.all { it }
-        if (permissionsGranted) {
-            context.startService(Intent(context, WakeWordService::class.java))
-        }
     }
 
     LaunchedEffect(Unit) {
@@ -108,7 +106,6 @@ fun LauncherScreen(
             PermissionUtil.hasNotificationPermission(context)
         ) {
             permissionsGranted = true
-            context.startService(Intent(context, WakeWordService::class.java))
         } else {
             permissionLauncher.launch(PermissionUtil.requiredPermissions)
         }
@@ -123,7 +120,17 @@ fun LauncherScreen(
         }
     }
 
-    JarvisTheme(hudColors = hudColors) {
+    // Start/stop wake word service based on toggle
+    LaunchedEffect(alwaysListening, permissionsGranted) {
+        val serviceIntent = Intent(context, WakeWordService::class.java)
+        if (alwaysListening && permissionsGranted) {
+            context.startService(serviceIntent)
+        } else {
+            context.stopService(serviceIntent)
+        }
+    }
+
+    AegisTheme(hudColors = hudColors) {
         if (showSettings) {
             SettingsScreen(
                 viewModel = settingsViewModel,
@@ -139,7 +146,7 @@ fun LauncherScreen(
                 ) { page ->
                     when (page) {
                         0 -> HomeScreen(
-                            onJarvisActivate = { assistantViewModel.onManualActivate() },
+                            onAegisActivate = { assistantViewModel.onManualActivate() },
                             onSettingsOpen = { showSettings = true },
                             favoritePackages = favorites,
                             onOrbitAppClick = { pkg ->
