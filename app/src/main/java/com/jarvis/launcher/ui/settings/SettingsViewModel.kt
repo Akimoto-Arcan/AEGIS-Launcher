@@ -16,6 +16,7 @@ class SettingsViewModel @Inject constructor(
     val apiKey: StateFlow<String> = apiKeyStore.apiKey
     val favoriteApps: StateFlow<List<String>> = preferencesStore.favoriteApps
     val colorThemeName: StateFlow<String> = preferencesStore.colorThemeName
+    val useFahrenheit: StateFlow<Boolean> = preferencesStore.useFahrenheit
 
     fun hasApiKey(): Boolean = apiKeyStore.hasApiKey()
 
@@ -28,4 +29,6 @@ class SettingsViewModel @Inject constructor(
     fun removeFavoriteApp(packageName: String) = preferencesStore.removeFavoriteApp(packageName)
 
     fun setFavoriteApps(packages: List<String>) = preferencesStore.setFavoriteApps(packages)
+
+    fun toggleTemperatureUnit() = preferencesStore.setUseFahrenheit(!preferencesStore.getUseFahrenheit())
 }

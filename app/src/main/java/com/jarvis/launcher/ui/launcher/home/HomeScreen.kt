@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jarvis.launcher.ui.components.GlowText
+import com.jarvis.launcher.data.repository.WeatherData
 import com.jarvis.launcher.ui.launcher.widgets.HudBattery
 import com.jarvis.launcher.ui.launcher.widgets.HudClock
 import com.jarvis.launcher.ui.launcher.widgets.HudDate
@@ -50,6 +51,8 @@ fun HomeScreen(
     onSettingsOpen: () -> Unit = {},
     favoritePackages: List<String> = emptyList(),
     onOrbitAppClick: (String) -> Unit = {},
+    weatherData: WeatherData? = null,
+    useFahrenheit: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
@@ -97,7 +100,11 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                HudWeather(modifier = Modifier.padding(top = 8.dp))
+                HudWeather(
+                    weatherData = weatherData,
+                    useFahrenheit = useFahrenheit,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
                 HudBattery(modifier = Modifier.padding(top = 8.dp))
             }
 

@@ -136,6 +136,37 @@ fun SettingsScreen(
             }
         }
 
+        // ===== TEMPERATURE UNIT =====
+        item {
+            val useFahrenheit by viewModel.useFahrenheit.collectAsState()
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "TEMPERATURE UNIT",
+                style = MaterialTheme.typography.labelLarge,
+                color = hudColors.accent
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                listOf(true to "°F", false to "°C").forEach { (isFahrenheit, label) ->
+                    val isSelected = useFahrenheit == isFahrenheit
+                    OutlinedButton(
+                        onClick = { if (!isSelected) viewModel.toggleTemperatureUnit() },
+                        border = BorderStroke(
+                            1.dp,
+                            if (isSelected) hudColors.accent else HudBorder
+                        ),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            color = if (isSelected) hudColors.accent else HudBorder,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                }
+            }
+        }
+
         // ===== ORBIT APPS =====
         item {
             Spacer(modifier = Modifier.height(8.dp))

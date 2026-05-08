@@ -1,10 +1,13 @@
 package com.jarvis.launcher.domain.voice
 
+import android.util.Log
 import com.jarvis.launcher.data.repository.AssistantRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,13 +35,17 @@ class VoicePipeline @Inject constructor(
     val detections = wakeWordDetector.detections
 
     suspend fun onWakeWordDetected() {
-        if (_state.value != VoiceState.Idle) return
+        if (_state.value != VoiceState.Idle && _state.value !is VoiceState.WakeWordDetected) return
 
+        Log.d("VoicePipeline", "Wake word detected, starting pipeline")
         _state.value = VoiceState.WakeWordDetected
-        delay(400)
+        delay(300)
 
         _state.value = VoiceState.Listening
+        Log.d("VoicePipeline", "Listening for speech...")
+
         val userSpeech = speechRecognizerManager.recognize()
+        Log.d("VoicePipeline", "Speech result: $userSpeech")
 
         if (userSpeech.isNullOrBlank()) {
             _state.value = VoiceState.Error("I didn't catch that, sir.")
@@ -48,14 +55,19 @@ class VoicePipeline @Inject constructor(
         }
 
         val cleanedSpeech = stripWakeWord(userSpeech)
-
         _state.value = VoiceState.Processing(cleanedSpeech)
+        Log.d("VoicePipeline", "Sending to LLM: $cleanedSpeech")
 
         try {
-            val response = assistantRepository.chat(cleanedSpeech)
+            val response = withContext(Dispatchers.IO) {
+                assistantRepository.chat(cleanedSpeech)
+            }
+            Log.d("VoicePipeline", "LLM response: $response")
+
             _state.value = VoiceState.Speaking(cleanedSpeech, response)
             ttsManager.speak(response)
         } catch (e: Exception) {
+            Log.e("VoicePipeline", "LLM error", e)
             val errorMsg = "I apologize, sir. I'm having trouble connecting to my systems."
             _state.value = VoiceState.Speaking(cleanedSpeech, errorMsg)
             ttsManager.speak(errorMsg)
@@ -66,9 +78,7 @@ class VoicePipeline @Inject constructor(
     }
 
     fun manualActivate() {
-        if (_state.value == VoiceState.Idle) {
-            _state.value = VoiceState.WakeWordDetected
-        }
+        _state.value = VoiceState.WakeWordDetected
     }
 
     fun cancel() {

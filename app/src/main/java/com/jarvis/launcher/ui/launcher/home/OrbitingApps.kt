@@ -36,27 +36,9 @@ import androidx.core.graphics.drawable.toBitmap
 import com.jarvis.launcher.ui.theme.LocalHudColors
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
-
-data class OrbitConfig(
-    val radiusXFraction: Float,
-    val radiusYFraction: Float,
-    val speed: Int,
-    val phaseOffset: Float,
-    val clockwise: Boolean = true
-)
-
-private val orbitConfigs = listOf(
-    OrbitConfig(0.34f, 0.30f, 25000, 0f),
-    OrbitConfig(0.34f, 0.30f, 25000, PI.toFloat() * 0.25f),
-    OrbitConfig(0.34f, 0.30f, 25000, PI.toFloat() * 0.50f),
-    OrbitConfig(0.34f, 0.30f, 25000, PI.toFloat() * 0.75f),
-    OrbitConfig(0.34f, 0.30f, 25000, PI.toFloat() * 1.0f),
-    OrbitConfig(0.34f, 0.30f, 25000, PI.toFloat() * 1.25f),
-    OrbitConfig(0.34f, 0.30f, 25000, PI.toFloat() * 1.50f),
-    OrbitConfig(0.34f, 0.30f, 25000, PI.toFloat() * 1.75f),
-)
 
 @Composable
 fun OrbitingApps(
@@ -75,46 +57,38 @@ fun OrbitingApps(
     val screenHeightPx = with(density) { config.screenHeightDp.dp.toPx() }
     val centerX = screenWidthPx / 2f
     val centerY = screenHeightPx / 2f
+    val orbitRadius = min(screenWidthPx, screenHeightPx) * 0.33f
 
     val transition = rememberInfiniteTransition(label = "orbit")
     val angle by transition.animateFloat(
         initialValue = 0f,
         targetValue = (2 * PI).toFloat(),
         animationSpec = infiniteRepeatable(
-            animation = tween(25000, easing = LinearEasing),
+            animation = tween(30000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "orbit_angle"
     )
 
-    val iconSizeDp = 48.dp
+    val iconSizeDp = 46.dp
     val iconSizePx = with(density) { iconSizeDp.toPx() }
+    val count = favoritePackages.size
+    val angleStep = (2 * PI / count).toFloat()
 
     Box(modifier = modifier.fillMaxSize()) {
-        // Draw orbit path ring
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val rx = screenWidthPx * 0.34f
-            val ry = screenHeightPx * 0.30f
-            drawOval(
-                color = hudColors.accent.copy(alpha = 0.08f),
-                topLeft = Offset(centerX - rx, centerY - ry),
-                size = androidx.compose.ui.geometry.Size(rx * 2, ry * 2),
+            drawCircle(
+                color = hudColors.accent.copy(alpha = 0.06f),
+                center = Offset(centerX, centerY),
+                radius = orbitRadius,
                 style = Stroke(width = 1.dp.toPx())
             )
         }
 
-        favoritePackages.take(8).forEachIndexed { index, packageName ->
-            val orbitCfg = orbitConfigs[index % orbitConfigs.size]
-            val currentAngle = if (orbitCfg.clockwise) {
-                angle + orbitCfg.phaseOffset
-            } else {
-                -angle + orbitCfg.phaseOffset
-            }
-
-            val rx = screenWidthPx * orbitCfg.radiusXFraction
-            val ry = screenHeightPx * orbitCfg.radiusYFraction
-            val x = centerX + rx * cos(currentAngle) - iconSizePx / 2f
-            val y = centerY + ry * sin(currentAngle) - iconSizePx / 2f
+        favoritePackages.forEachIndexed { index, packageName ->
+            val itemAngle = angle + (angleStep * index)
+            val x = centerX + orbitRadius * cos(itemAngle) - iconSizePx / 2f
+            val y = centerY + orbitRadius * sin(itemAngle) - iconSizePx / 2f
 
             val icon: Drawable? = remember(packageName) {
                 try {
@@ -129,24 +103,19 @@ fun OrbitingApps(
                     it.toBitmap(96, 96).asImageBitmap()
                 }
 
-                val depth = sin(currentAngle)
-                val scale = 0.7f + 0.3f * ((depth + 1f) / 2f)
-                val alpha = 0.5f + 0.5f * ((depth + 1f) / 2f)
-
                 Box(
                     modifier = Modifier
                         .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
-                        .size(iconSizeDp * scale)
+                        .size(iconSizeDp)
                         .clip(CircleShape)
                         .clickable { onAppClick(packageName) },
                     contentAlignment = Alignment.Center
                 ) {
-                    // Glow ring behind icon
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         drawCircle(
                             brush = Brush.radialGradient(
                                 colors = listOf(
-                                    hudColors.accent.copy(alpha = 0.3f * alpha),
+                                    hudColors.accent.copy(alpha = 0.25f),
                                     Color.Transparent
                                 ),
                                 radius = size.minDimension / 2f
@@ -158,9 +127,8 @@ fun OrbitingApps(
                     Image(
                         bitmap = bitmap,
                         contentDescription = packageName,
-                        alpha = alpha,
                         modifier = Modifier
-                            .size(iconSizeDp * scale * 0.75f)
+                            .size(iconSizeDp * 0.75f)
                             .clip(CircleShape)
                     )
                 }

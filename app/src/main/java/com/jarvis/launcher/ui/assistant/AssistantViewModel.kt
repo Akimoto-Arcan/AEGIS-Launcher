@@ -2,6 +2,7 @@ package com.jarvis.launcher.ui.assistant
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jarvis.launcher.domain.voice.TextToSpeechManager
 import com.jarvis.launcher.domain.voice.VoicePipeline
 import com.jarvis.launcher.domain.voice.VoiceState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,8 +14,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AssistantViewModel @Inject constructor(
-    private val voicePipeline: VoicePipeline
+    private val voicePipeline: VoicePipeline,
+    private val ttsManager: TextToSpeechManager
 ) : ViewModel() {
+
+    init {
+        ttsManager.initialize()
+    }
 
     val voiceState: StateFlow<VoiceState> = voicePipeline.state
 
@@ -36,5 +42,10 @@ class AssistantViewModel @Inject constructor(
 
     fun onCancel() {
         voicePipeline.cancel()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ttsManager.release()
     }
 }

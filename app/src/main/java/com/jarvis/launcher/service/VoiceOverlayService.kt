@@ -36,6 +36,7 @@ class VoiceOverlayService : Service(), LifecycleOwner, ViewModelStoreOwner,
     SavedStateRegistryOwner {
 
     @Inject lateinit var voicePipeline: VoicePipeline
+    @Inject lateinit var ttsManager: com.jarvis.launcher.domain.voice.TextToSpeechManager
 
     private val lifecycleRegistry = LifecycleRegistry(this)
     override val lifecycle: Lifecycle get() = lifecycleRegistry
@@ -97,7 +98,7 @@ class VoiceOverlayService : Service(), LifecycleOwner, ViewModelStoreOwner,
 
     @Composable
     private fun OverlayContent() {
-        val viewModel = AssistantViewModel(voicePipeline)
+        val viewModel = AssistantViewModel(voicePipeline, ttsManager)
         AssistantOverlay(viewModel = viewModel)
     }
 

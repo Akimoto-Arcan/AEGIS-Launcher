@@ -3,6 +3,8 @@ package com.jarvis.launcher.domain.voice
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -20,6 +22,7 @@ class SpeechRecognizerManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private var recognizer: SpeechRecognizer? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private val _partialText = MutableStateFlow("")
     val partialText: StateFlow<String> = _partialText.asStateFlow()
@@ -27,81 +30,104 @@ class SpeechRecognizerManager @Inject constructor(
     private val _isListening = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
-    fun initialize() {
-        recognizer = if (SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
-            SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
-        } else {
-            SpeechRecognizer.createSpeechRecognizer(context)
+    private fun ensureRecognizer() {
+        if (recognizer == null) {
+            recognizer = if (SpeechRecognizer.isRecognitionAvailable(context)) {
+                SpeechRecognizer.createSpeechRecognizer(context)
+            } else {
+                null
+            }
         }
     }
 
     suspend fun recognize(): String? = suspendCancellableCoroutine { cont ->
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-            )
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
-            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-        }
+        mainHandler.post {
+            try {
+                ensureRecognizer()
+                val sr = recognizer
+                if (sr == null) {
+                    cont.resume(null)
+                    return@post
+                }
 
-        _partialText.value = ""
-        _isListening.value = true
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(
+                        RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                    )
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
+                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2000L)
+                }
 
-        recognizer?.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {}
+                _partialText.value = ""
+                _isListening.value = true
+                var resumed = false
 
-            override fun onBeginningOfSpeech() {}
+                sr.setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {}
+                    override fun onBeginningOfSpeech() {}
+                    override fun onRmsChanged(rmsdB: Float) {}
+                    override fun onBufferReceived(buffer: ByteArray?) {}
 
-            override fun onRmsChanged(rmsdB: Float) {}
+                    override fun onEndOfSpeech() {
+                        _isListening.value = false
+                    }
 
-            override fun onBufferReceived(buffer: ByteArray?) {}
+                    override fun onError(error: Int) {
+                        _isListening.value = false
+                        if (!resumed) {
+                            resumed = true
+                            cont.resume(null)
+                        }
+                    }
 
-            override fun onEndOfSpeech() {
-                _isListening.value = false
-            }
+                    override fun onResults(results: Bundle?) {
+                        _isListening.value = false
+                        val matches = results?.getStringArrayList(
+                            SpeechRecognizer.RESULTS_RECOGNITION
+                        )
+                        val text = matches?.firstOrNull()
+                        _partialText.value = text ?: ""
+                        if (!resumed) {
+                            resumed = true
+                            cont.resume(text)
+                        }
+                    }
 
-            override fun onError(error: Int) {
+                    override fun onPartialResults(partialResults: Bundle?) {
+                        val partial = partialResults?.getStringArrayList(
+                            SpeechRecognizer.RESULTS_RECOGNITION
+                        )
+                        _partialText.value = partial?.firstOrNull() ?: ""
+                    }
+
+                    override fun onEvent(eventType: Int, params: Bundle?) {}
+                })
+
+                sr.startListening(intent)
+
+                cont.invokeOnCancellation {
+                    _isListening.value = false
+                    mainHandler.post { sr.cancel() }
+                }
+            } catch (e: Exception) {
                 _isListening.value = false
                 cont.resume(null)
             }
-
-            override fun onResults(results: Bundle?) {
-                _isListening.value = false
-                val matches = results?.getStringArrayList(
-                    SpeechRecognizer.RESULTS_RECOGNITION
-                )
-                val text = matches?.firstOrNull()
-                _partialText.value = text ?: ""
-                cont.resume(text)
-            }
-
-            override fun onPartialResults(partialResults: Bundle?) {
-                val partial = partialResults?.getStringArrayList(
-                    SpeechRecognizer.RESULTS_RECOGNITION
-                )
-                _partialText.value = partial?.firstOrNull() ?: ""
-            }
-
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-        })
-
-        recognizer?.startListening(intent)
-
-        cont.invokeOnCancellation {
-            _isListening.value = false
-            recognizer?.cancel()
         }
     }
 
     fun cancel() {
         _isListening.value = false
-        recognizer?.cancel()
+        mainHandler.post { recognizer?.cancel() }
     }
 
     fun release() {
-        recognizer?.destroy()
-        recognizer = null
+        mainHandler.post {
+            recognizer?.destroy()
+            recognizer = null
+        }
     }
 }

@@ -61,12 +61,23 @@ class PreferencesStore @Inject constructor(
         _colorThemeName.value = name
     }
 
+    private val _useFahrenheit = MutableStateFlow(getUseFahrenheit())
+    val useFahrenheit: StateFlow<Boolean> = _useFahrenheit.asStateFlow()
+
+    fun getUseFahrenheit(): Boolean = prefs.getBoolean(KEY_TEMP_UNIT, true)
+
+    fun setUseFahrenheit(fahrenheit: Boolean) {
+        prefs.edit().putBoolean(KEY_TEMP_UNIT, fahrenheit).apply()
+        _useFahrenheit.value = fahrenheit
+    }
+
     companion object {
         private const val KEY_FAVORITES = "favorite_apps"
         private const val KEY_COLOR_THEME = "color_theme"
+        private const val KEY_TEMP_UNIT = "use_fahrenheit"
         private const val SEPARATOR = ","
         private const val DEFAULT_THEME = "Cyan"
-        const val MAX_FAVORITES = 8
+        const val MAX_FAVORITES = 16
 
         val COLOR_THEMES = listOf(
             HudColorTheme("Cyan", 0xFF00E5FF, 0xFF0097A7, 0x4D00E5FF),
