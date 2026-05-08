@@ -35,11 +35,9 @@ import com.jarvis.launcher.ui.theme.HudTextDim
 import com.jarvis.launcher.ui.theme.LocalHudColors
 import kotlinx.coroutines.delay
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 
 @Composable
 fun HudClock(
@@ -55,8 +53,7 @@ fun HudClock(
             currentTime = LocalTime.now()
             nextAlarmText = getNextAlarmText(context)
             val now = System.currentTimeMillis()
-            val delayMs = 1000L - (now % 1000L)
-            delay(delayMs)
+            delay(1000L - (now % 1000L))
         }
     }
 
@@ -81,14 +78,12 @@ fun HudClock(
         fontSize = 56.sp,
         letterSpacing = 4.sp
     )
-
     val secondsStyle = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Light,
         fontSize = 36.sp,
         letterSpacing = 2.sp
     )
-
     val colonStyle = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Light,
@@ -98,11 +93,7 @@ fun HudClock(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.clickable {
-            val intent = Intent(AlarmClock.ACTION_SHOW_ALARMS)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            context.startActivity(intent)
-        }
+        modifier = modifier.clickable { openClockApp(context) }
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
             GlowText(text = hours, style = mainStyle, color = accent, glowColor = accent, glowAlpha = 0.35f)
@@ -126,19 +117,53 @@ fun HudClock(
     }
 }
 
-private fun getNextAlarmText(context: Context): String? {
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-    val alarmInfo = alarmManager?.nextAlarmClock ?: return null
-    val triggerTime = alarmInfo.triggerTime
-    val now = System.currentTimeMillis()
-    val hoursUntil = (triggerTime - now) / (1000 * 60 * 60)
-
-    if (hoursUntil > 24) return null
-
-    val alarmDateTime = LocalDateTime.ofInstant(
-        Instant.ofEpochMilli(triggerTime),
-        ZoneId.systemDefault()
+private fun openClockApp(context: Context) {
+    val intents = listOf(
+        Intent(AlarmClock.ACTION_SHOW_ALARMS),
+        Intent(Intent.ACTION_MAIN).apply {
+            setClassName("com.sec.android.app.clockpackage", "com.sec.android.app.clockpackage.ClockPackage")
+        },
+        Intent(Intent.ACTION_MAIN).apply {
+            setClassName("com.google.android.deskclock", "com.android.deskclock.DeskClock")
+        }
     )
-    val formatted = alarmDateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-    return "ALARM $formatted"
+    for (intent in intents) {
+        try {
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+            return
+        } catch (_: Exception) {}
+    }
+}
+
+private fun getNextAlarmText(context: Context): String? {
+    try {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            ?: return null
+        val alarmInfo = alarmManager.nextAlarmClock ?: return null
+        val triggerTime = alarmInfo.triggerTime
+        val now = System.currentTimeMillis()
+
+        if (triggerTime <= now) return null
+
+        val diffMs = triggerTime - now
+        val diffHours = diffMs / (1000 * 60 * 60)
+        if (diffHours > 24) return null
+
+        val alarmTime = Instant.ofEpochMilli(triggerTime)
+            .atZone(ZoneId.systemDefault())
+            .toLocalTime()
+
+        val formatted = alarmTime.format(DateTimeFormatter.ofPattern("h:mm a"))
+
+        val diffMinutes = diffMs / (1000 * 60)
+        val timeUntil = when {
+            diffMinutes < 60 -> "${diffMinutes}m"
+            else -> "${diffHours}h ${diffMinutes % 60}m"
+        }
+
+        return "ALARM $formatted ($timeUntil)"
+    } catch (_: Exception) {
+        return null
+    }
 }
