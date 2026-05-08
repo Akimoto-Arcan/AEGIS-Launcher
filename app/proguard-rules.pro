@@ -1,0 +1,4 @@
+-keep class com.jarvis.launcher.data.model.** { *; }
+-keep class com.jarvis.launcher.data.remote.** { *; }
+-dontwarn okhttp3.**
+-dontwarn retrofit2.**

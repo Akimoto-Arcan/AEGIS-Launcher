@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="jarvis_cyan">#FF00E5FF</color>
+    <color name="jarvis_cyan_dark">#FF0097A7</color>
+    <color name="jarvis_blue">#FF2196F3</color>
+    <color name="jarvis_blue_dark">#FF0D47A1</color>
+    <color name="hud_background">#FF000000</color>
+    <color name="hud_surface">#B30A1929</color>
+    <color name="hud_text">#FFB2EBF2</color>
+</resources>
