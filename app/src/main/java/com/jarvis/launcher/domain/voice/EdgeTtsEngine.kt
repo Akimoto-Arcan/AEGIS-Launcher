@@ -32,7 +32,7 @@ class EdgeTtsEngine @Inject constructor(
 
     private var mediaPlayer: MediaPlayer? = null
 
-    suspend fun speak(text: String, voice: String = VOICE_RYAN): Boolean =
+    suspend fun speak(text: String, voice: String = "en-US-AndrewMultilingualNeural"): Boolean =
         withContext(Dispatchers.IO) {
             try {
                 val audioFile = synthesize(text, voice) ?: return@withContext false
@@ -68,7 +68,7 @@ class EdgeTtsEngine @Inject constructor(
                             "Path:speech.config\r\n\r\n" +
                             """{"context":{"synthesis":{"audio":{"metadataoptions":{""" +
                             """"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},""" +
-                            """"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}"""
+                            """"outputFormat":"audio-24khz-96kbitrate-mono-mp3"}}}}"""
                     webSocket.send(configMsg)
 
                     val escapedText = text
@@ -78,16 +78,15 @@ class EdgeTtsEngine @Inject constructor(
                         .replace("\"", "&quot;")
                         .replace("'", "&apos;")
 
+                    val lang = if (voice.startsWith("en-GB")) "en-GB" else "en-US"
+
                     val ssmlMsg = "X-RequestId:$requestId\r\n" +
                             "Content-Type:application/ssml+xml\r\n" +
                             "Path:ssml\r\n\r\n" +
                             "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' " +
-                            "xmlns:mstts='http://www.w3.org/2001/mstts' " +
-                            "xml:lang='en-GB'>" +
+                            "xml:lang='$lang'>" +
                             "<voice name='$voice'>" +
-                            "<mstts:express-as style='calm'>" +
-                            "<prosody rate='-2%' pitch='-10%' volume='+10%'>$escapedText</prosody>" +
-                            "</mstts:express-as>" +
+                            "<prosody pitch='-5%'>$escapedText</prosody>" +
                             "</voice></speak>"
                     webSocket.send(ssmlMsg)
                 }
@@ -195,14 +194,15 @@ class EdgeTtsEngine @Inject constructor(
     }
 
     companion object {
-        const val VOICE_RYAN = "en-GB-RyanNeural"
-        const val VOICE_THOMAS = "en-GB-ThomasNeural"
-        const val VOICE_GUY = "en-US-GuyNeural"
-
         val VOICES = listOf(
-            VOICE_RYAN to "Ryan (British, deep)",
-            VOICE_THOMAS to "Thomas (British, mature)",
-            VOICE_GUY to "Guy (American, authoritative)"
+            "en-US-AndrewMultilingualNeural" to "Andrew (natural, warm)",
+            "en-US-DavisNeural" to "Davis (calm, smooth)",
+            "en-US-BrandonNeural" to "Brandon (clear, confident)",
+            "en-GB-RyanNeural" to "Ryan (British, deep)",
+            "en-GB-ThomasNeural" to "Thomas (British, mature)",
+            "en-US-GuyNeural" to "Guy (authoritative)",
+            "en-US-ChristopherNeural" to "Christopher (warm, rich)",
+            "en-US-EricNeural" to "Eric (steady, professional)",
         )
 
         private const val WSS_URL = "wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1"

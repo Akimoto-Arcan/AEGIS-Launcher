@@ -86,7 +86,7 @@ class PreferencesStore @Inject constructor(
         private const val KEY_COLOR_THEME = "color_theme"
         private const val KEY_VOICE = "voice_id"
         private const val KEY_TEMP_UNIT = "use_fahrenheit"
-        private const val DEFAULT_VOICE = "en-GB-RyanNeural"
+        private const val DEFAULT_VOICE = "en-US-AndrewMultilingualNeural"
         private const val SEPARATOR = ","
         private const val DEFAULT_THEME = "Cyan"
         const val MAX_FAVORITES = 16

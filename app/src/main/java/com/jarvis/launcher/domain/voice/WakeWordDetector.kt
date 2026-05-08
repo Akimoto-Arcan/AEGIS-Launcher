@@ -10,13 +10,11 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,80 +27,93 @@ class WakeWordDetector @Inject constructor(
 
     private var recognizer: SpeechRecognizer? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    private var isListening = false
     private var enabled = false
 
+    private val wakePatterns = listOf(
+        "jarvis",
+        "hey jarvis",
+        "ok jarvis",
+        "okay jarvis"
+    )
+
     suspend fun startListening() = withContext(Dispatchers.Main) {
-        if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            Log.w("WakeWord", "Speech recognition not available")
-            return@withContext
-        }
+        if (!SpeechRecognizer.isRecognitionAvailable(context)) return@withContext
 
         enabled = true
         recognizer = SpeechRecognizer.createSpeechRecognizer(context)
 
         recognizer?.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                isListening = true
-            }
-
+            override fun onReadyForSpeech(params: Bundle?) {}
             override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() { isListening = false }
+            override fun onEndOfSpeech() {}
 
             override fun onError(error: Int) {
-                isListening = false
-                // Restart listening after a brief pause
                 if (enabled) {
-                    mainHandler.postDelayed({ startListeningInternal() }, 500)
+                    val delay = when (error) {
+                        SpeechRecognizer.ERROR_NO_MATCH,
+                        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> 300L
+                        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> 2000L
+                        else -> 1000L
+                    }
+                    mainHandler.postDelayed({ restartListening() }, delay)
                 }
             }
 
             override fun onResults(results: Bundle?) {
-                isListening = false
-                val matches = results?.getStringArrayList(
-                    SpeechRecognizer.RESULTS_RECOGNITION
-                )
-                val text = matches?.firstOrNull()?.lowercase() ?: ""
-
-                if (text.contains("jarvis")) {
-                    Log.d("WakeWord", "Detected wake word in: $text")
-                    _detections.tryEmit("jarvis")
-                    // Pause before restarting to let the pipeline handle it
-                    if (enabled) {
-                        mainHandler.postDelayed({ startListeningInternal() }, 5000)
-                    }
-                } else {
-                    // Didn't hear "jarvis", keep listening
-                    if (enabled) {
-                        mainHandler.postDelayed({ startListeningInternal() }, 100)
-                    }
+                checkForWakeWord(results)
+                if (enabled) {
+                    mainHandler.postDelayed({ restartListening() }, 200)
                 }
             }
 
             override fun onPartialResults(partialResults: Bundle?) {
-                val partial = partialResults?.getStringArrayList(
-                    SpeechRecognizer.RESULTS_RECOGNITION
-                )
-                val text = partial?.firstOrNull()?.lowercase() ?: ""
-                if (text.contains("jarvis")) {
-                    Log.d("WakeWord", "Detected wake word in partial: $text")
-                    recognizer?.cancel()
-                    _detections.tryEmit("jarvis")
-                    if (enabled) {
-                        mainHandler.postDelayed({ startListeningInternal() }, 5000)
-                    }
-                }
+                // Only check partials — don't trigger and restart here
+                // to avoid double-firing
             }
 
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
 
-        startListeningInternal()
+        restartListening()
     }
 
-    private fun startListeningInternal() {
+    private fun checkForWakeWord(results: Bundle?) {
+        val matches = results?.getStringArrayList(
+            SpeechRecognizer.RESULTS_RECOGNITION
+        ) ?: return
+        val confidences = results.getFloatArray(SpeechRecognizer.CONFIDENCE_SCORES)
+
+        for ((index, text) in matches.withIndex()) {
+            val lower = text.lowercase().trim()
+            val confidence = confidences?.getOrNull(index) ?: 0f
+
+            // Strict matching: the utterance must BE the wake word
+            // or START with the wake word (e.g. "Jarvis what time is it")
+            val isWakeWord = wakePatterns.any { pattern ->
+                lower == pattern ||
+                lower.startsWith("$pattern ") ||
+                lower.startsWith("$pattern,")
+            }
+
+            if (isWakeWord && (confidence > 0.5f || confidences == null)) {
+                Log.d("WakeWord", "Detected: '$text' (confidence: $confidence)")
+                _detections.tryEmit("jarvis")
+                // Pause detection while pipeline runs
+                if (enabled) {
+                    enabled = false
+                    mainHandler.postDelayed({
+                        enabled = true
+                        restartListening()
+                    }, 8000)
+                }
+                return
+            }
+        }
+    }
+
+    private fun restartListening() {
         if (!enabled) return
         try {
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -111,23 +122,24 @@ class WakeWordDetector @Inject constructor(
                     RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
                 )
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
-                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 3000L)
-                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000L)
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+                putExtra(
+                    RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,
+                    2000L
+                )
             }
             recognizer?.startListening(intent)
         } catch (e: Exception) {
-            Log.e("WakeWord", "Failed to start listening", e)
+            Log.e("WakeWord", "Failed to start", e)
             if (enabled) {
-                mainHandler.postDelayed({ startListeningInternal() }, 2000)
+                mainHandler.postDelayed({ restartListening() }, 3000)
             }
         }
     }
 
     fun stopListening() {
         enabled = false
-        isListening = false
         mainHandler.post {
             try {
                 recognizer?.cancel()
