@@ -26,7 +26,8 @@ class VoicePipeline @Inject constructor(
     private val wakeWordDetector: WakeWordDetector,
     private val speechRecognizerManager: SpeechRecognizerManager,
     private val assistantRepository: AssistantRepository,
-    private val ttsManager: TextToSpeechManager
+    private val ttsManager: TextToSpeechManager,
+    private val audioRouter: AudioRouter
 ) {
     private val _state = MutableStateFlow<VoiceState>(VoiceState.Idle)
     val state: StateFlow<VoiceState> = _state.asStateFlow()
@@ -37,9 +38,12 @@ class VoicePipeline @Inject constructor(
     suspend fun onWakeWordDetected() {
         if (_state.value != VoiceState.Idle && _state.value !is VoiceState.WakeWordDetected) return
 
-        Log.d("VoicePipeline", "Wake word detected, starting pipeline")
+        Log.d("VoicePipeline", "Activated, starting pipeline")
         _state.value = VoiceState.WakeWordDetected
-        delay(300)
+
+        // Route audio through Bluetooth if connected
+        audioRouter.startBluetoothSco()
+        delay(500)
 
         _state.value = VoiceState.Listening
         Log.d("VoicePipeline", "Listening for speech...")
@@ -50,6 +54,7 @@ class VoicePipeline @Inject constructor(
         if (userSpeech.isNullOrBlank()) {
             _state.value = VoiceState.Error("I didn't catch that, sir.")
             delay(2000)
+            audioRouter.stopBluetoothSco()
             _state.value = VoiceState.Idle
             return
         }
@@ -73,6 +78,7 @@ class VoicePipeline @Inject constructor(
             ttsManager.speak(errorMsg)
         }
 
+        audioRouter.stopBluetoothSco()
         delay(500)
         _state.value = VoiceState.Idle
     }
@@ -84,6 +90,7 @@ class VoicePipeline @Inject constructor(
     fun cancel() {
         speechRecognizerManager.cancel()
         ttsManager.stop()
+        audioRouter.stopBluetoothSco()
         _state.value = VoiceState.Idle
     }
 

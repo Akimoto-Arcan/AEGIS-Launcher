@@ -98,9 +98,6 @@ fun LauncherScreen(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         permissionsGranted = results.values.all { it }
-        if (permissionsGranted) {
-            context.startService(Intent(context, WakeWordService::class.java))
-        }
     }
 
     LaunchedEffect(Unit) {
@@ -108,7 +105,6 @@ fun LauncherScreen(
             PermissionUtil.hasNotificationPermission(context)
         ) {
             permissionsGranted = true
-            context.startService(Intent(context, WakeWordService::class.java))
         } else {
             permissionLauncher.launch(PermissionUtil.requiredPermissions)
         }

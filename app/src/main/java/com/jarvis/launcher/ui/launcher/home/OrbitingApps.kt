@@ -22,13 +22,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -48,16 +48,12 @@ fun OrbitingApps(
 ) {
     if (favoritePackages.isEmpty()) return
 
-    val context = LocalContext.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     val density = LocalDensity.current
-    val config = LocalConfiguration.current
     val hudColors = LocalHudColors.current
 
-    val screenWidthPx = with(density) { config.screenWidthDp.dp.toPx() }
-    val screenHeightPx = with(density) { config.screenHeightDp.dp.toPx() }
-    val centerX = screenWidthPx / 2f
-    val centerY = screenHeightPx / 2f
-    val orbitRadius = min(screenWidthPx, screenHeightPx) * 0.33f
+    val boxWidthPx = remember { mutableFloatStateOf(0f) }
+    val boxHeightPx = remember { mutableFloatStateOf(0f) }
 
     val transition = rememberInfiniteTransition(label = "orbit")
     val angle by transition.animateFloat(
@@ -72,14 +68,30 @@ fun OrbitingApps(
 
     val iconSizeDp = 46.dp
     val iconSizePx = with(density) { iconSizeDp.toPx() }
-    val count = favoritePackages.size
-    val angleStep = (2 * PI / count).toFloat()
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .onGloballyPositioned { coords ->
+                boxWidthPx.floatValue = coords.size.width.toFloat()
+                boxHeightPx.floatValue = coords.size.height.toFloat()
+            }
+    ) {
+        val w = boxWidthPx.floatValue
+        val h = boxHeightPx.floatValue
+        if (w <= 0f || h <= 0f) return@Box
+
+        val centerX = w / 2f
+        val centerY = h / 2f
+        val orbitRadius = min(w, h) * 0.30f
+
+        val count = favoritePackages.size
+        val angleStep = (2 * PI / count).toFloat()
+
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
                 color = hudColors.accent.copy(alpha = 0.06f),
-                center = Offset(centerX, centerY),
+                center = androidx.compose.ui.geometry.Offset(centerX, centerY),
                 radius = orbitRadius,
                 style = Stroke(width = 1.dp.toPx())
             )

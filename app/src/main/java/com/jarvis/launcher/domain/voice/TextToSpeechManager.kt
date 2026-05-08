@@ -84,7 +84,13 @@ class TextToSpeechManager @Inject constructor(
             }
         })
 
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+        val params = android.os.Bundle().apply {
+            putInt(
+                android.speech.tts.TextToSpeech.Engine.KEY_PARAM_STREAM,
+                android.media.AudioManager.STREAM_MUSIC
+            )
+        }
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
 
         cont.invokeOnCancellation {
             tts?.stop()
